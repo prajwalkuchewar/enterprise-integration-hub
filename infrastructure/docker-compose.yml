@@ -1,0 +1,70 @@
+services:
+  eih-sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: eih-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Your_strong!Passw0rd # change to a secure password that meets SQL Server complexity rules
+    ports:
+      - '1433:1433'
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    restart: unless-stopped
+
+  eih-kafka:
+    image: redpanda/redpanda:latest
+    container_name: eih-kafka
+    profiles:
+      - kafka           # <-- add this so Kafka is not started by default
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - '1'
+      - --memory
+      - '1G'
+      - --reserve-memory
+      - '0M'
+      - --node-id
+      - '0'
+      - --check
+      - 'false'
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:9092
+    ports:
+      - '9092:9092'
+      - '29092:29092'
+    volumes:
+      - redpanda_data:/var/lib/redpanda
+    restart: unless-stopped
+
+  eih-redis:
+    image: redis:7.2-alpine
+    container_name: eih-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  eih-azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: eih-azurite
+    ports:
+      - '10000:10000' # Blob
+      - '10001:10001' # Queue
+      - '10002:10002' # Table
+    volumes:
+      - azurite_data:/data
+    restart: unless-stopped
+
+networks:
+  eih-infra:
+    driver: bridge
+
+volumes:
+  sqlserver_data:
+  redpanda_data:
+  redis_data:
+  azurite_data:
