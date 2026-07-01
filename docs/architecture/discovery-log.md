@@ -136,22 +136,42 @@ It is **not** the owner of business information.
 
 # 7. Domain Concepts Discovered
 
+## External System
+
+### Responsibility
+
+Represents an enterprise application that participates in integrations.
+
+Examples include:
+
+- HRMS
+- ERP
+- CRM
+- Payroll
+- ExpensePro
+
+An External System represents the business identity of an application.
+
+It does not define how communication occurs. That responsibility belongs to one or more Connectors.
+
 ## Connector
 
 ### Responsibility
 
-Represents everything required for the Integration Hub to communicate with a single external system.
+Represents the communication contract required to interact with a single External System.
 
-A Connector knows:
+A Connector defines:
 
 - Base URL
 - Authentication
 - Timeout
 - Retry Policy
-- Supported capabilities
-- Connection status
+- Headers
+- Certificates (optional)
+- Communication Protocol
+- Connection Status
 
-A Connector does **not** contain workflow logic or execution history.
+A Connector knows how to communicate with an External System but does not define business workflows or store execution history.
 
 ---
 
@@ -166,9 +186,16 @@ A Workflow decides:
 - Which event starts the process.
 - Which Connector is used.
 - Which destination systems receive the event.
-- What transformations or routing rules apply.
 
 The Workflow orchestrates communication.
+
+A Workflow defines:
+
+- Trigger Event
+- Source Connector
+- Destination Connector(s)
+- Execution Order
+- Associated Transformation(s)
 
 ---
 
@@ -207,6 +234,23 @@ Audit Logs support:
 
 An Audit Log is evidence, not the execution itself.
 
+## Transformation
+
+### Responsibility
+
+Defines how business data is converted from the source system's schema into the destination system's expected schema.
+
+Transformation responsibilities include:
+
+- Field Mapping
+- Value Conversion
+- Filtering
+- Enrichment
+- Validation
+- Default Values
+
+A Transformation focuses solely on data conversion and contains no workflow or communication logic.
+
 ---
 
 # 8. Domain Relationships (Current Understanding)
@@ -216,6 +260,10 @@ Connector
 ↓
 
 Workflow
+
+↓
+
+Transformation
 
 ↓
 
@@ -252,10 +300,12 @@ These will guide future design sessions.
 - When should retries occur?
 - How should failed executions be replayed?
 - What metrics should Operations monitor?
+- Can one Workflow have multiple destinations?
+- Should Transformations be reusable across Workflows?
 
 ---
 
-# Current Domain Model
+# Current Domain Model (v0.1)
 
 ```
 Enterprise Integration Hub
@@ -271,6 +321,25 @@ Enterprise Integration Hub
 │
 └── Audit Log
        └── Records what happened
+
+Enterprise Integration Hub
+
+External System
+        │
+        ▼
+ Connector
+        │
+        ▼
+ Workflow
+        │
+        ▼
+Transformation
+        │
+        ▼
+Integration Execution
+        │
+        ▼
+ Audit Log
 ```
 
 ---
@@ -288,3 +357,12 @@ Instead ask:
 > "What responsibility does the business need fulfilled?"
 
 The software design should emerge naturally from the answer.
+
+# Domain Modeling Principles
+
+1. External Systems own business data.
+2. Connectors own communication configuration.
+3. Workflows own business orchestration.
+4. Transformations own data conversion.
+5. Integration Executions own runtime state.
+6. Audit Logs own historical evidence.
