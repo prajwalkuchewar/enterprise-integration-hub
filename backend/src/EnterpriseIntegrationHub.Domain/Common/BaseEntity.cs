@@ -10,8 +10,8 @@ namespace EnterpriseIntegrationHub.Domain.Common
     {
         public Guid Id { get; init; }
 
-        public DateTime CreatedAt { get; private set; }
+        public string? CreatedAt { get; private set; }
 
-        public DateTime UpdatedAt { get; private set; }
+        public string? UpdatedAt { get; private set; }
     }
 }

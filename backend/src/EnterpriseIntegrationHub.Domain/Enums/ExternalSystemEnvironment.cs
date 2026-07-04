@@ -2,9 +2,9 @@ namespace EnterpriseIntegrationHub.Domain.Enums
 {
     public enum ExternalSystemEnvironment
     {
-        DEV = 1,
-        SIT = 2,
-        UAT = 3,
-        PROD = 4
+        Development = 1,
+        Testing = 2,
+        UserAcceptance = 3,
+        Production = 4
     }
 }

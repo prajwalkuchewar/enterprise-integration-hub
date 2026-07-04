@@ -2,8 +2,7 @@
 {
     public enum ExternalSystemStatus
     {
-        Draft = 1,
-        Active = 2,
-        Inactive = 3
+        Active = 1,
+        Inactive = 2
     }
 }
