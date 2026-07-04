@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace EnterpriseIntegrationHub.Domain.Enums
+﻿namespace EnterpriseIntegrationHub.Domain.Enums
 {
-    internal class ExternalSystemStatus
+    public enum ExternalSystemStatus
     {
+        Draft = 1,
+        Active = 2,
+        Inactive = 3
     }
 }

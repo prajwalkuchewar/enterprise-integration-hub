@@ -6,7 +6,12 @@ using System.Threading.Tasks;
 
 namespace EnterpriseIntegrationHub.Domain.Common
 {
-    internal class BaseEntity
+    public abstract class BaseEntity
     {
+        public Guid Id { get; init; }
+
+        public DateTime CreatedAt { get; private set; }
+
+        public DateTime UpdatedAt { get; private set; }
     }
 }
