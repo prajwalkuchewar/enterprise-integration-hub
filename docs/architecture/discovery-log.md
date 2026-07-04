@@ -173,37 +173,63 @@ A Connector defines:
 
 A Connector knows how to communicate with an External System but does not define business workflows or store execution history.
 
----
-
 ## Workflow
 
 ### Responsibility
 
-Defines how business events move through the organization.
+Defines a business integration process.
 
-A Workflow decides:
-
-- Which event starts the process.
-- Which Connector is used.
-- Which destination systems receive the event.
-
-The Workflow orchestrates communication.
+A Workflow orchestrates the movement of business events from one source system to one or more destination systems.
 
 A Workflow defines:
 
 - Trigger Event
 - Source Connector
-- Destination Connector(s)
-- Execution Order
-- Associated Transformation(s)
+- One or more Workflow Steps
+- Execution Strategy (Sequential/Parallel - future)
+- Activation Status
 
----
+## Workflow Step
+
+### Responsibility
+
+Represents a single integration action within a Workflow.
+
+Each Workflow Step defines:
+
+- Destination Connector
+- Transformation
+- Execution Order
+- Retry Policy (future)
+- Execution Condition (future)
+
+A Workflow may contain one or many Workflow Steps.
+
+## Transformation
+
+### Responsibility
+
+Defines how business data is transformed from the source system schema into the destination system schema.
+
+Transformation responsibilities include:
+
+- Field Mapping
+- Value Conversion
+- Filtering
+- Enrichment
+- Validation
+- Default Values
+
+A Transformation focuses solely on data conversion and contains no workflow or communication logic.
 
 ## Integration Execution
 
 ### Responsibility
 
 Represents one execution attempt of a workflow.
+An Integration Execution represents the runtime instance of a Workflow execution.
+
+Every execution has its own lifecycle independent of the Workflow definition.
 
 Each execution records:
 
@@ -216,8 +242,6 @@ Each execution records:
 - Failure information (if any)
 
 Executions are created every time a workflow runs.
-
----
 
 ## Audit Log
 
@@ -233,45 +257,36 @@ Audit Logs support:
 - Historical investigation
 
 An Audit Log is evidence, not the execution itself.
-
-## Transformation
-
-### Responsibility
-
-Defines how business data is converted from the source system's schema into the destination system's expected schema.
-
-Transformation responsibilities include:
-
-- Field Mapping
-- Value Conversion
-- Filtering
-- Enrichment
-- Validation
-- Default Values
-
-A Transformation focuses solely on data conversion and contains no workflow or communication logic.
+Audit Logs are immutable historical records and should never be modified after creation.
 
 ---
 
 # 8. Domain Relationships (Current Understanding)
 
-Connector
+```text
 
-↓
 
-Workflow
+                                            Workflow
+                                                    |
+        ┌──────────────┴──────────────┐
+        │                                                                                  │
+ Source Connector                                                Workflow Step(s)
+                                                                                              │
+                                                      ┌─────────────┴───────┐
+                                                         │                                                           │
+                                            Destination Connector                          Transformation
+                                                                                                              │
+                                                                                                                ▼
+                                                                                 Integration Execution
+                                                                                                        │
+                                                                                                        ▼
+                                                                                                    Audit Log
 
-↓
-
-Transformation
-
-↓
-
-Integration Execution
-
-↓
-
-Audit Log
+External System
+      │
+      ▼
+Connector(s)
+```
 
 Each concept owns a distinct responsibility and evolves independently.
 
@@ -302,6 +317,10 @@ These will guide future design sessions.
 - What metrics should Operations monitor?
 - Can one Workflow have multiple destinations?
 - Should Transformations be reusable across Workflows?
+- Can a Workflow Step execute in parallel?
+- Should Workflow Steps support conditional execution?
+- How should failed Workflow Steps affect the remaining steps?
+- How should Workflow versions be managed?
 
 ---
 
@@ -310,36 +329,27 @@ These will guide future design sessions.
 ```
 Enterprise Integration Hub
 
+├── External System
+│      └── Business identity of an enterprise application
+│
 ├── Connector
-│      └── Knows how to communicate
+│      └── Communication contract
 │
 ├── Workflow
-│      └── Knows when and where to communicate
+│      └── Business orchestration
+│
+├── Workflow Step
+│      └── One integration action
+│
+├── Transformation
+│      └── Data conversion
 │
 ├── Integration Execution
-│      └── Represents one execution attempt
+│      └── Runtime execution
 │
 └── Audit Log
-       └── Records what happened
+       └── Historical evidence
 
-Enterprise Integration Hub
-
-External System
-        │
-        ▼
- Connector
-        │
-        ▼
- Workflow
-        │
-        ▼
-Transformation
-        │
-        ▼
-Integration Execution
-        │
-        ▼
- Audit Log
 ```
 
 ---
@@ -366,3 +376,4 @@ The software design should emerge naturally from the answer.
 4. Transformations own data conversion.
 5. Integration Executions own runtime state.
 6. Audit Logs own historical evidence.
+7. Configuration objects and runtime objects should always be separated.
