@@ -1,21 +1,23 @@
 services:
   eih-sqlserver:
-    image: mcr.microsoft.com/mssql/server:2019-latest
+    image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: eih-sqlserver
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD=Your_strong!Passw0rd # change to a secure password that meets SQL Server complexity rules
+      - SA_PASSWORD=Passw0rd # change to a secure password that meets SQL Server complexity rules
     ports:
       - '1433:1433'
     volumes:
       - sqlserver_data:/var/opt/mssql
     restart: unless-stopped
+    networks:
+      - eih-infra
 
   eih-kafka:
     image: redpanda/redpanda:latest
     container_name: eih-kafka
     profiles:
-      - kafka           # <-- add this so Kafka is not started by default
+      - kafka # <-- add this so Kafka is not started by default
     command:
       - redpanda
       - start
@@ -38,6 +40,8 @@ services:
     volumes:
       - redpanda_data:/var/lib/redpanda
     restart: unless-stopped
+    networks:
+      - eih-infra
 
   eih-redis:
     image: redis:7.2-alpine
@@ -47,6 +51,8 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
+    networks:
+      - eih-infra
 
   eih-azurite:
     image: mcr.microsoft.com/azure-storage/azurite
@@ -58,6 +64,8 @@ services:
     volumes:
       - azurite_data:/data
     restart: unless-stopped
+    networks:
+      - eih-infra
 
 networks:
   eih-infra:

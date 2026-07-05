@@ -1,8 +1,17 @@
+using EnterpriseIntegrationHub.Application.Interfaces;
+using EnterpriseIntegrationHub.Infrastructure.Persistence;
+using EnterpriseIntegrationHub.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddDbContext<EnterpriseIntegrationHubDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IExternalSystemRepository, ExternalSystemRepository>();
 
 var app = builder.Build();
 

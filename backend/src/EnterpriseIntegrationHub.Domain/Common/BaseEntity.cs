@@ -1,17 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace EnterpriseIntegrationHub.Domain.Common;
 
-namespace EnterpriseIntegrationHub.Domain.Common
+public abstract class BaseEntity
 {
-    public abstract class BaseEntity
+    protected BaseEntity()
     {
-        public Guid Id { get; init; }
-
-        public string? CreatedAt { get; private set; }
-
-        public string? UpdatedAt { get; private set; }
+        Id = Guid.NewGuid();
+        CreatedAt = DateTimeOffset.UtcNow;
     }
+
+    public Guid Id { get; private init; }
+
+    public DateTimeOffset CreatedAt { get; private init; }
+
+    public DateTimeOffset? UpdatedAt { get; private set; }
 }

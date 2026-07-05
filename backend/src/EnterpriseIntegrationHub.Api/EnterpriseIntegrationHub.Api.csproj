@@ -15,4 +15,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\EnterpriseIntegrationHub.Application\EnterpriseIntegrationHub.Application.csproj" />
+    <ProjectReference Include="..\EnterpriseIntegrationHub.Infrastructure\EnterpriseIntegrationHub.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>
