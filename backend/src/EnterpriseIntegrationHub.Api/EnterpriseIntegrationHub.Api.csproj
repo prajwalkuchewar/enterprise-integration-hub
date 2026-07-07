@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,11 +13,13 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+
+    <!-- Required for AddSwaggerGen / UseSwagger / UseSwaggerUI extension methods -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\EnterpriseIntegrationHub.Application\EnterpriseIntegrationHub.Application.csproj" />
     <ProjectReference Include="..\EnterpriseIntegrationHub.Infrastructure\EnterpriseIntegrationHub.Infrastructure.csproj" />
   </ItemGroup>
-
 </Project>
