@@ -84,14 +84,15 @@ public sealed class ExternalSystemsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ViewDetails([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        var query = new ViewDetailsExternalSystemQuery(id);
-        var response = await _viewDetailsHandler.Handle(query, cancellationToken);
-
-        if (response is null)
+            var query = new ViewDetailsExternalSystemQuery(id);
+        try
         {
-            return NotFound(new { message = $"External system with ID {id} not found." });
+            var response = await _viewDetailsHandler.Handle(query, cancellationToken);
+            return Ok(response);
         }
-
-        return Ok(response);
+        catch (KeyNotFoundException exception)
+        {
+            return NotFound(new { message = exception.Message });
+        }
     }
 }

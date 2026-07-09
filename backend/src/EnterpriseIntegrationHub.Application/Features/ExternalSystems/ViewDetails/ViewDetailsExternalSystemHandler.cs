@@ -14,7 +14,7 @@ public sealed class ViewDetailsExternalSystemHandler
 
     public async Task<ExternalSystemSummary> Handle(ViewDetailsExternalSystemQuery query, CancellationToken cancellationToken)
     {
-        var item = await _repository.GetDetailsAsync(query.Id,cancellationToken);
+        var item = await _repository.GetByIdAsync(query.Id,cancellationToken);
 
         if(item is null)
         {

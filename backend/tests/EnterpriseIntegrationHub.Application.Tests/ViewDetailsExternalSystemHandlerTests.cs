@@ -18,7 +18,7 @@ public class ViewDetailsExternalSystemHandlerTests
     public async Task Handle_WhenNotFound_ThrowsKeyNotFoundException()
     {
         var repo = new Mock<IExternalSystemRepository>();
-        repo.Setup(r => r.GetDetailsAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ExternalSystem?)null);
 
         var handler = new ViewDetailsExternalSystemHandler(repo.Object);
@@ -32,7 +32,7 @@ public class ViewDetailsExternalSystemHandlerTests
     {
         var entity = new ExternalSystem("Name", "Description", ExternalSystemEnvironment.UserAcceptance, ExternalSystemStatus.Active);
         var repo = new Mock<IExternalSystemRepository>();
-        repo.Setup(r => r.GetDetailsAsync(entity.Id, It.IsAny<CancellationToken>()))
+        repo.Setup(r => r.GetByIdAsync(entity.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(entity);
 
         var handler = new ViewDetailsExternalSystemHandler(repo.Object);

@@ -44,7 +44,7 @@ public sealed class ExternalSystemRepository : IExternalSystemRepository
 
     }
 
-    public async Task<ExternalSystem?> GetDetailsAsync(Guid Id, CancellationToken cancellationToken)
+    public async Task<ExternalSystem?> GetByIdAsync(Guid Id, CancellationToken cancellationToken)
     {
         return await _context.ExternalSystems
             .AsNoTracking()

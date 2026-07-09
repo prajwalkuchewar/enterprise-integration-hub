@@ -11,7 +11,7 @@ namespace EnterpriseIntegrationHub.Application.Interfaces
 
         Task<IReadOnlyCollection<ExternalSystem>> GetAllAsync(CancellationToken cancellationToken);
 
-        Task<ExternalSystem?> GetDetailsAsync(Guid Id, CancellationToken cancellationToken);
+        Task<ExternalSystem?> GetByIdAsync(Guid Id, CancellationToken cancellationToken);
 
     }
 }
