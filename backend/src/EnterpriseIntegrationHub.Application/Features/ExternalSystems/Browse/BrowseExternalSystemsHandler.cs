@@ -3,16 +3,16 @@ using EnterpriseIntegrationHub.Application.Interfaces;
 
 namespace EnterpriseIntegrationHub.Application.Features.ExternalSystems.Browse;
 
-public sealed class BrowseExternalSystemHandler
+public sealed class BrowseExternalSystemsHandler
 {
     private readonly IExternalSystemRepository _repository;
 
-    public BrowseExternalSystemHandler(IExternalSystemRepository repository)
+    public BrowseExternalSystemsHandler(IExternalSystemRepository repository)
     {
         _repository = repository;
     }
 
-    public async Task<BrowseExternalSystemsResponseModel> Handle(BrowseExternalSystemQuery query, CancellationToken cancellationToken)
+    public async Task<BrowseExternalSystemsResponseModel> Handle(BrowseExternalSystemsQuery query, CancellationToken cancellationToken)
     {
         var items = await _repository.GetAllAsync(cancellationToken);
 

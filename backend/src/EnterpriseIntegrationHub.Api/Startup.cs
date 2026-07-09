@@ -1,6 +1,8 @@
 using EnterpriseIntegrationHub.Api.Extensions;
 using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Create;
 using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Browse;
+using EnterpriseIntegrationHub.Application.Features.ExternalSystems.ViewDetails;
+
 using EnterpriseIntegrationHub.Application.Interfaces;
 using EnterpriseIntegrationHub.Infrastructure.Persistence;
 using EnterpriseIntegrationHub.Infrastructure.Repositories;
@@ -32,7 +34,8 @@ namespace EnterpriseIntegrationHub.Api
 
             // Application services / DI
             services.AddScoped<CreateExternalSystemHandler>();
-            services.AddScoped<BrowseExternalSystemHandler>();
+            services.AddScoped<BrowseExternalSystemsHandler>();
+            services.AddScoped<ViewDetailsExternalSystemHandler>();
             services.AddScoped<IExternalSystemRepository, ExternalSystemRepository>();
 
             // Cross-origin requests (adjust origins as needed)
