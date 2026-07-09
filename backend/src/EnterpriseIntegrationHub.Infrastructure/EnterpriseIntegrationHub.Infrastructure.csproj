@@ -14,8 +14,8 @@
     </PackageReference>
   </ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\EnterpriseIntegrationHub.Domain\EnterpriseIntegrationHub.Domain.csproj" />
+  <ItemGroup>
+    <ProjectReference Include="..\EnterpriseIntegrationHub.Domain\EnterpriseIntegrationHub.Domain.csproj" />
 		<ProjectReference Include="..\EnterpriseIntegrationHub.Application\EnterpriseIntegrationHub.Application.csproj" />
-	</ItemGroup>
+  </ItemGroup>
 </Project>

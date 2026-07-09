@@ -1,12 +1,10 @@
 using EnterpriseIntegrationHub.Api.Extensions;
 using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Create;
+using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Browse;
 using EnterpriseIntegrationHub.Application.Interfaces;
 using EnterpriseIntegrationHub.Infrastructure.Persistence;
 using EnterpriseIntegrationHub.Infrastructure.Repositories;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace EnterpriseIntegrationHub.Api
 {
@@ -34,6 +32,7 @@ namespace EnterpriseIntegrationHub.Api
 
             // Application services / DI
             services.AddScoped<CreateExternalSystemHandler>();
+            services.AddScoped<BrowseExternalSystemHandler>();
             services.AddScoped<IExternalSystemRepository, ExternalSystemRepository>();
 
             // Cross-origin requests (adjust origins as needed)
