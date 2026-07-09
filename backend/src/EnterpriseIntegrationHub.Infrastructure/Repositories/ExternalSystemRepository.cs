@@ -34,4 +34,13 @@ public sealed class ExternalSystemRepository : IExternalSystemRepository
         _context.ExternalSystems.Add(externalSystem);
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<List<ExternalSystem>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return await _context.ExternalSystems
+            .AsNoTracking()
+            .OrderBy(x => x.Name)
+            .ToListAsync(cancellationToken);
+
+    }
 }

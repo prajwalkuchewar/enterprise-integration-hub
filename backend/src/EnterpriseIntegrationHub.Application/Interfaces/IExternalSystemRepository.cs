@@ -8,5 +8,7 @@ namespace EnterpriseIntegrationHub.Application.Interfaces
         Task<bool> ExistsAsync( string name, ExternalSystemEnvironment environment, CancellationToken cancellationToken);
 
         Task AddAsync( ExternalSystem externalSystem, CancellationToken cancellationToken);
+
+        Task<List<ExternalSystem>> GetAllAsync(CancellationToken cancellationToken);
     }
 }

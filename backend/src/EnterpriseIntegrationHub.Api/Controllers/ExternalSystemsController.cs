@@ -9,10 +9,13 @@ namespace EnterpriseIntegrationHub.Api.Controllers;
 public sealed class ExternalSystemsController : ControllerBase
 {
     private readonly CreateExternalSystemHandler _handler;
+    private readonly BrowseExternalSystemHandler _browseHandler;
 
-    public ExternalSystemsController(CreateExternalSystemHandler handler)
+
+    public ExternalSystemsController(CreateExternalSystemHandler handler, BrowseExternalSystemHandler browseHandler)
     {
         _handler = handler;
+        _browseHandler = browseHandler;
     }
 
     [HttpPost]
@@ -35,5 +38,14 @@ public sealed class ExternalSystemsController : ControllerBase
         {
             return Conflict(new { message = exception.Message });
         }
+    }
+
+
+    [HttpGet]
+    public async Task<IActionResult> Browse(CancellationToken cancellationToken)
+    {
+        var response = await _browseHandler.Handle(cancellationToken);
+
+        return Ok(response);
     }
 }
