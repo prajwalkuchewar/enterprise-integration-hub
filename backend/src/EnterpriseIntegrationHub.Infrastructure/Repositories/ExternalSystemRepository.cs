@@ -35,7 +35,7 @@ public sealed class ExternalSystemRepository : IExternalSystemRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<List<ExternalSystem>> GetAllAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyCollection<ExternalSystem>> GetAllAsync(CancellationToken cancellationToken)
     {
         return await _context.ExternalSystems
             .AsNoTracking()

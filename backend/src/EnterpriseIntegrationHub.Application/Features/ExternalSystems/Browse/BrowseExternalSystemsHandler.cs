@@ -1,5 +1,7 @@
-using EnterpriseIntegrationHub.Application.Interfaces;
 using EnterpriseIntegrationHub.Application.Contracts.Responses;
+using EnterpriseIntegrationHub.Application.Interfaces;
+
+namespace EnterpriseIntegrationHub.Application.Features.ExternalSystems.Browse;
 
 public sealed class BrowseExternalSystemHandler
 {
@@ -10,15 +12,9 @@ public sealed class BrowseExternalSystemHandler
         _repository = repository;
     }
 
-    public async Task<BrowseExternalSystemsResponseModel> Handle(CancellationToken cancellationToken)
+    public async Task<BrowseExternalSystemsResponseModel> Handle(BrowseExternalSystemQuery query, CancellationToken cancellationToken)
     {
         var items = await _repository.GetAllAsync(cancellationToken);
-
-        if (items== null || !items.Any())
-        {
-            return new BrowseExternalSystemsResponseModel(Array.Empty<ExternalSystemSummary>(), TotalCount: 0);
-
-        }
 
         var summaries = items
             .Select(x => new ExternalSystemSummary(

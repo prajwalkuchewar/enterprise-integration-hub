@@ -1,5 +1,6 @@
 using EnterpriseIntegrationHub.Api.Extensions;
 using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Create;
+using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Browse;
 using EnterpriseIntegrationHub.Application.Interfaces;
 using EnterpriseIntegrationHub.Infrastructure.Persistence;
 using EnterpriseIntegrationHub.Infrastructure.Repositories;
