@@ -10,5 +10,8 @@ namespace EnterpriseIntegrationHub.Application.Interfaces
         Task AddAsync( ExternalSystem externalSystem, CancellationToken cancellationToken);
 
         Task<IReadOnlyCollection<ExternalSystem>> GetAllAsync(CancellationToken cancellationToken);
+
+        Task<ExternalSystem?> GetByIdAsync(Guid Id, CancellationToken cancellationToken);
+
     }
 }

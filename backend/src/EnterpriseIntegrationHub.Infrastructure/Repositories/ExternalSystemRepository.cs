@@ -43,4 +43,13 @@ public sealed class ExternalSystemRepository : IExternalSystemRepository
             .ToListAsync(cancellationToken);
 
     }
+
+    public async Task<ExternalSystem?> GetByIdAsync(Guid Id, CancellationToken cancellationToken)
+    {
+        return await _context.ExternalSystems
+            .AsNoTracking()
+            .Where(x => x.Id == Id)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
 }
