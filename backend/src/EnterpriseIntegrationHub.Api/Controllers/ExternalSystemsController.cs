@@ -16,16 +16,16 @@ namespace EnterpriseIntegrationHub.Api.Controllers;
 public sealed class ExternalSystemsController : ControllerBase
 {
     private readonly CreateExternalSystemHandler _createHandler;
-    private readonly BrowseHandler _browseHandler;
-    private readonly ViewDetailsHandler _viewDetailsHandler;
+    private readonly EnterpriseIntegrationHub.Application.Features.ExternalSystems.Browse.BrowseExternalSystemsHandler _browseHandler;
+    private readonly EnterpriseIntegrationHub.Application.Features.ExternalSystems.ViewDetails.ViewExternalSystemDetailsHandler _viewDetailsHandler;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ExternalSystemsController"/> class.
     /// </summary>
     public ExternalSystemsController(
         CreateExternalSystemHandler createHandler,
-        BrowseHandler browseHandler,
-        ViewDetailsHandler viewDetailsHandler)
+        EnterpriseIntegrationHub.Application.Features.ExternalSystems.Browse.BrowseExternalSystemsHandler browseHandler,
+        EnterpriseIntegrationHub.Application.Features.ExternalSystems.ViewDetails.ViewExternalSystemDetailsHandler viewDetailsHandler)
     {
         _createHandler = createHandler;
         _browseHandler = browseHandler;

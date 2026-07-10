@@ -3,11 +3,11 @@ using EnterpriseIntegrationHub.Application.Interfaces;
 
 namespace EnterpriseIntegrationHub.Application.Features.Connectors.Browse;
 
-public sealed class BrowseHandler
+public sealed class BrowseConnectorsHandler
 {
     private readonly IConnectorRepository _repository;
 
-    public BrowseHandler(IConnectorRepository repository)
+    public BrowseConnectorsHandler(IConnectorRepository repository)
     {
         _repository = repository;
     }

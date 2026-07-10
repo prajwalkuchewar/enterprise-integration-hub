@@ -24,7 +24,9 @@ public sealed class ConnectorConfiguration : IEntityTypeConfiguration<Connector>
             .IsRequired()
             .HasMaxLength(1000);
 
-        builder.Property(x => x.ExternalSystemId)
+        builder.HasOne<ExternalSystem>()
+            .WithMany()
+            .HasForeignKey(x => x.ExternalSystemId)
             .IsRequired();
 
         builder.Property(x => x.BaseUrl)

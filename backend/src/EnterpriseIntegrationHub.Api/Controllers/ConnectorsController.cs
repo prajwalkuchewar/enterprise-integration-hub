@@ -16,16 +16,16 @@ namespace EnterpriseIntegrationHub.Api.Controllers;
 public sealed class ConnectorsController : ControllerBase
 {
     private readonly CreateConnectorHandler _createHandler;
-    private readonly BrowseHandler _browseHandler;
-    private readonly ViewDetailsHandler _viewDetailsHandler;
+    private readonly EnterpriseIntegrationHub.Application.Features.Connectors.Browse.BrowseConnectorsHandler _browseHandler;
+    private readonly EnterpriseIntegrationHub.Application.Features.Connectors.ViewDetails.ViewConnectorDetailsHandler _viewDetailsHandler;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConnectorsController"/> class.
     /// </summary>
     public ConnectorsController(
         CreateConnectorHandler createHandler,
-        BrowseHandler browseHandler,
-        ViewDetailsHandler viewDetailsHandler)
+        EnterpriseIntegrationHub.Application.Features.Connectors.Browse.BrowseConnectorsHandler browseHandler,
+        EnterpriseIntegrationHub.Application.Features.Connectors.ViewDetails.ViewConnectorDetailsHandler viewDetailsHandler)
     {
         _createHandler = createHandler;
         _browseHandler = browseHandler;
@@ -58,6 +58,10 @@ public sealed class ConnectorsController : ControllerBase
         {
             var id = await _createHandler.Handle(command, cancellationToken);
             return Created($"/api/connectors/{id}", new { id });
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(new { message = exception.Message });
         }
         catch (InvalidOperationException exception)
         {

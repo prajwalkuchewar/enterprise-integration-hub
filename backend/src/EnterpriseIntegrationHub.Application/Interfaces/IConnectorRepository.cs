@@ -5,7 +5,7 @@ namespace EnterpriseIntegrationHub.Application.Interfaces
 {
     public interface IConnectorRepository
     {
-        Task<bool> ExistsAsync(Guid externalSystemId, ConnectorProtocol protocol, CancellationToken cancellationToken);
+        Task<bool> ExistsAsync(Guid externalSystemId, string name, ConnectorProtocol protocol, CancellationToken cancellationToken);
 
         Task AddAsync( Connector connector, CancellationToken cancellationToken);
 

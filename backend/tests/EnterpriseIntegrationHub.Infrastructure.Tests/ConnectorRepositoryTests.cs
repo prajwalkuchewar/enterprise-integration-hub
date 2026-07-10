@@ -54,7 +54,7 @@ public class ConnectorRepositoryTests : IDisposable
     await _context.SaveChangesAsync();
 
     // Act
-    var result = await _repository.ExistsAsync(externalSystemId, ConnectorProtocol.REST, CancellationToken.None);
+    var result = await _repository.ExistsAsync(externalSystemId, "Test Connector", ConnectorProtocol.REST, CancellationToken.None);
 
     // Assert
     result.Should().BeTrue();
@@ -67,7 +67,7 @@ public class ConnectorRepositoryTests : IDisposable
     var externalSystemId = Guid.NewGuid();
 
     // Act
-    var result = await _repository.ExistsAsync(externalSystemId, ConnectorProtocol.REST, CancellationToken.None);
+    var result = await _repository.ExistsAsync(externalSystemId, "DoesNotExist", ConnectorProtocol.REST, CancellationToken.None);
 
     // Assert
     result.Should().BeFalse();
@@ -92,7 +92,7 @@ public class ConnectorRepositoryTests : IDisposable
     await _context.SaveChangesAsync();
 
     // Act
-    var result = await _repository.ExistsAsync(externalSystemId, ConnectorProtocol.REST, CancellationToken.None);
+    var result = await _repository.ExistsAsync(externalSystemId, "Test Connector", ConnectorProtocol.REST, CancellationToken.None);
 
     // Assert
     result.Should().BeFalse();
@@ -117,7 +117,7 @@ public class ConnectorRepositoryTests : IDisposable
     await _context.SaveChangesAsync();
 
     // Act
-    var result = await _repository.ExistsAsync(externalSystemId, ConnectorProtocol.SOAP, CancellationToken.None);
+    var result = await _repository.ExistsAsync(externalSystemId, "Test Connector", ConnectorProtocol.SOAP, CancellationToken.None);
 
     // Assert
     result.Should().BeFalse();

@@ -16,13 +16,15 @@ public sealed class ConnectorRepository : IConnectorRepository
     }
 
     public async Task<bool> ExistsAsync(
-        Guid externalSystemId, 
+        Guid externalSystemId,
+        string name,
         ConnectorProtocol protocol,
         CancellationToken cancellationToken)
     {
         return await _context.Connectors
             .AnyAsync(x =>
                 x.ExternalSystemId == externalSystemId &&
+                x.Name == name &&
                 x.Protocol == protocol &&
                 x.Status != ConnectorStatus.Inactive,
                 cancellationToken);

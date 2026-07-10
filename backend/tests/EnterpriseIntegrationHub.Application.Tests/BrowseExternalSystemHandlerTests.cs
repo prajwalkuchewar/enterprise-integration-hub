@@ -27,7 +27,7 @@ public class BrowseExternalSystemsHandlerTests
         repo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(items.AsReadOnly());
 
-        var handler = new BrowseHandler(repo.Object);
+        var handler = new BrowseExternalSystemsHandler(repo.Object);
         var query = new BrowseQuery();
 
         var result = await handler.Handle(query, CancellationToken.None);
@@ -48,7 +48,7 @@ public class BrowseExternalSystemsHandlerTests
         repo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<ExternalSystem>().AsReadOnly());
 
-        var handler = new BrowseHandler(repo.Object);
+        var handler = new BrowseExternalSystemsHandler(repo.Object);
         var query = new BrowseQuery();
 
         var result = await handler.Handle(query, CancellationToken.None);

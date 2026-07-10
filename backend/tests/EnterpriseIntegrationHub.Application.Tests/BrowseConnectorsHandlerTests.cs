@@ -30,7 +30,7 @@ public class BrowseConnectorsHandlerTests
     repo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
         .ReturnsAsync(items.AsReadOnly());
 
-    var handler = new BrowseHandler(repo.Object);
+    var handler = new BrowseConnectorsHandler(repo.Object);
     var query = new BrowseQuery();
 
     // Act
@@ -54,7 +54,7 @@ public class BrowseConnectorsHandlerTests
     repo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
         .ReturnsAsync(new List<Connector>().AsReadOnly());
 
-    var handler = new BrowseHandler(repo.Object);
+    var handler = new BrowseConnectorsHandler(repo.Object);
     var query = new BrowseQuery();
 
     // Act
@@ -85,7 +85,7 @@ public class BrowseConnectorsHandlerTests
     repo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
         .ReturnsAsync(new List<Connector> { connector }.AsReadOnly());
 
-    var handler = new BrowseHandler(repo.Object);
+    var handler = new BrowseConnectorsHandler(repo.Object);
     var query = new BrowseQuery();
 
     // Act
@@ -122,7 +122,7 @@ public class BrowseConnectorsHandlerTests
     repo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
         .ReturnsAsync(items.AsReadOnly());
 
-    var handler = new BrowseHandler(repo.Object);
+    var handler = new BrowseConnectorsHandler(repo.Object);
     var query = new BrowseQuery();
 
     // Act

@@ -22,7 +22,7 @@ public class ViewDetailsConnectorHandlerTests
     repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync((Connector?)null);
 
-    var handler = new ViewDetailsHandler(repo.Object);
+    var handler = new ViewConnectorDetailsHandler(repo.Object);
     var query = new ViewDetailsQuery(Guid.NewGuid());
 
     // Act & Assert
@@ -49,7 +49,7 @@ public class ViewDetailsConnectorHandlerTests
     repo.Setup(r => r.GetByIdAsync(connector.Id, It.IsAny<CancellationToken>()))
         .ReturnsAsync(connector);
 
-    var handler = new ViewDetailsHandler(repo.Object);
+    var handler = new ViewConnectorDetailsHandler(repo.Object);
     var query = new ViewDetailsQuery(connector.Id);
 
     // Act
@@ -90,7 +90,7 @@ public class ViewDetailsConnectorHandlerTests
     repo.Setup(r => r.GetByIdAsync(connector.Id, It.IsAny<CancellationToken>()))
         .ReturnsAsync(connector);
 
-    var handler = new ViewDetailsHandler(repo.Object);
+    var handler = new ViewConnectorDetailsHandler(repo.Object);
     var query = new ViewDetailsQuery(connector.Id);
 
     // Act
@@ -123,7 +123,7 @@ public class ViewDetailsConnectorHandlerTests
     repo.Setup(r => r.GetByIdAsync(connector.Id, It.IsAny<CancellationToken>()))
         .ReturnsAsync(connector);
 
-    var handler = new ViewDetailsHandler(repo.Object);
+    var handler = new ViewConnectorDetailsHandler(repo.Object);
     var query = new ViewDetailsQuery(connector.Id);
 
     // Act
@@ -155,7 +155,7 @@ public class ViewDetailsConnectorHandlerTests
     repo.Setup(r => r.GetByIdAsync(connector.Id, It.IsAny<CancellationToken>()))
         .ReturnsAsync(connector);
 
-    var handler = new ViewDetailsHandler(repo.Object);
+    var handler = new ViewConnectorDetailsHandler(repo.Object);
     var query = new ViewDetailsQuery(connector.Id);
 
     // Act

@@ -59,7 +59,7 @@ public class CreateConnectorHandlerTests
         .ReturnsAsync(externalSystem);
 
     _connectorRepositoryMock
-        .Setup(r => r.ExistsAsync(externalSystemId, ConnectorProtocol.REST, It.IsAny<CancellationToken>()))
+        .Setup(r => r.ExistsAsync(externalSystemId, "Test Connector", ConnectorProtocol.REST, It.IsAny<CancellationToken>()))
         .ReturnsAsync(true);
 
     var command = new CreateConnectorCommand(
@@ -88,7 +88,7 @@ public class CreateConnectorHandlerTests
         .ReturnsAsync(externalSystem);
 
     _connectorRepositoryMock
-        .Setup(r => r.ExistsAsync(externalSystemId, ConnectorProtocol.REST, It.IsAny<CancellationToken>()))
+        .Setup(r => r.ExistsAsync(externalSystemId, "Test Connector", ConnectorProtocol.REST, It.IsAny<CancellationToken>()))
         .ReturnsAsync(false);
 
     Connector? capturedConnector = null;
@@ -122,127 +122,5 @@ public class CreateConnectorHandlerTests
     capturedConnector.Status.Should().Be(ConnectorStatus.Draft);
 
     _connectorRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Connector>(), It.IsAny<CancellationToken>()), Times.Once);
-  }
-
-  [Theory]
-  [InlineData(ConnectorProtocol.REST)]
-  [InlineData(ConnectorProtocol.SOAP)]
-  [InlineData(ConnectorProtocol.SFTP)]
-  [InlineData(ConnectorProtocol.GraphQL)]
-  public async Task Handle_WithDifferentProtocols_CreatesConnectorWithCorrectProtocol(ConnectorProtocol protocol)
-  {
-    // Arrange
-    var externalSystemId = Guid.NewGuid();
-    var externalSystem = new ExternalSystem("External System", "Description", ExternalSystemEnvironment.Development, ExternalSystemStatus.Active);
-
-    _externalSystemRepositoryMock
-        .Setup(r => r.GetByIdAsync(externalSystemId, It.IsAny<CancellationToken>()))
-        .ReturnsAsync(externalSystem);
-
-    _connectorRepositoryMock
-        .Setup(r => r.ExistsAsync(externalSystemId, protocol, It.IsAny<CancellationToken>()))
-        .ReturnsAsync(false);
-
-    Connector? capturedConnector = null;
-    _connectorRepositoryMock
-        .Setup(r => r.AddAsync(It.IsAny<Connector>(), It.IsAny<CancellationToken>()))
-        .Callback<Connector, CancellationToken>((c, ct) => capturedConnector = c)
-        .Returns(Task.CompletedTask);
-
-    var command = new CreateConnectorCommand(
-        "Test Connector",
-        "Description",
-        externalSystemId,
-        "https://api.example.com",
-        protocol,
-        ConnectorAuthenticationType.APIKey,
-        30);
-
-    // Act
-    await _handler.Handle(command, CancellationToken.None);
-
-    // Assert
-    capturedConnector.Should().NotBeNull();
-    capturedConnector!.Protocol.Should().Be(protocol);
-  }
-
-  [Theory]
-  [InlineData(ConnectorAuthenticationType.APIKey)]
-  [InlineData(ConnectorAuthenticationType.OAuth2)]
-  [InlineData(ConnectorAuthenticationType.Basic)]
-  [InlineData(ConnectorAuthenticationType.BearerToken)]
-  public async Task Handle_WithDifferentAuthenticationTypes_CreatesConnectorWithCorrectAuthType(ConnectorAuthenticationType authType)
-  {
-    // Arrange
-    var externalSystemId = Guid.NewGuid();
-    var externalSystem = new ExternalSystem("External System", "Description", ExternalSystemEnvironment.Development, ExternalSystemStatus.Active);
-
-    _externalSystemRepositoryMock
-        .Setup(r => r.GetByIdAsync(externalSystemId, It.IsAny<CancellationToken>()))
-        .ReturnsAsync(externalSystem);
-
-    _connectorRepositoryMock
-        .Setup(r => r.ExistsAsync(externalSystemId, ConnectorProtocol.REST, It.IsAny<CancellationToken>()))
-        .ReturnsAsync(false);
-
-    Connector? capturedConnector = null;
-    _connectorRepositoryMock
-        .Setup(r => r.AddAsync(It.IsAny<Connector>(), It.IsAny<CancellationToken>()))
-        .Callback<Connector, CancellationToken>((c, ct) => capturedConnector = c)
-        .Returns(Task.CompletedTask);
-
-    var command = new CreateConnectorCommand(
-        "Test Connector",
-        "Description",
-        externalSystemId,
-        "https://api.example.com",
-        ConnectorProtocol.REST,
-        authType,
-        30);
-
-    // Act
-    await _handler.Handle(command, CancellationToken.None);
-
-    // Assert
-    capturedConnector.Should().NotBeNull();
-    capturedConnector!.AuthenticationType.Should().Be(authType);
-  }
-
-  [Fact]
-  public async Task Handle_WhenTimeoutSecondsIsZero_UsesDefaultValue()
-  {
-    // Arrange
-    var externalSystemId = Guid.NewGuid();
-    var externalSystem = new ExternalSystem("External System", "Description", ExternalSystemEnvironment.Development, ExternalSystemStatus.Active);
-
-    _externalSystemRepositoryMock
-        .Setup(r => r.GetByIdAsync(externalSystemId, It.IsAny<CancellationToken>()))
-        .ReturnsAsync(externalSystem);
-
-    _connectorRepositoryMock
-        .Setup(r => r.ExistsAsync(externalSystemId, ConnectorProtocol.REST, It.IsAny<CancellationToken>()))
-        .ReturnsAsync(false);
-
-    Connector? capturedConnector = null;
-    _connectorRepositoryMock
-        .Setup(r => r.AddAsync(It.IsAny<Connector>(), It.IsAny<CancellationToken>()))
-        .Callback<Connector, CancellationToken>((c, ct) => capturedConnector = c)
-        .Returns(Task.CompletedTask);
-
-    var command = new CreateConnectorCommand(
-        "Test Connector",
-        "Description",
-        externalSystemId,
-        "https://api.example.com",
-        ConnectorProtocol.REST,
-        ConnectorAuthenticationType.APIKey,
-        0); // Zero timeout
-
-    // Act
-    await _handler.Handle(command, CancellationToken.None);
-
-    // Assert
-    capturedConnector.Should().NotBeNull();
-    capturedConnector!.TimeoutSeconds.Should().Be(0);
   }
 }

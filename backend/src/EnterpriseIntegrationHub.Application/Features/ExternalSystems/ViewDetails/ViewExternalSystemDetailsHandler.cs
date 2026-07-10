@@ -3,11 +3,11 @@ using EnterpriseIntegrationHub.Application.Interfaces;
 
 namespace EnterpriseIntegrationHub.Application.Features.ExternalSystems.ViewDetails;
 
-public sealed class ViewDetailsHandler
+public sealed class ViewExternalSystemDetailsHandler
 {
     private readonly IExternalSystemRepository _repository;
 
-    public ViewDetailsHandler(IExternalSystemRepository repository)
+    public ViewExternalSystemDetailsHandler(IExternalSystemRepository repository)
     {
         _repository = repository;
     }

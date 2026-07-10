@@ -20,6 +20,11 @@ public sealed class CreateConnectorHandler
         CancellationToken cancellationToken)
     {
 
+        // Validate command early to protect application/business rules
+        var validator = new CreateConnectorCommandValidator();
+        validator.Validate(command);
+
+
         var externalSystem = await _externalSystemRepository
         .GetByIdAsync(command.ExternalSystemId, cancellationToken);
 
@@ -31,6 +36,7 @@ public sealed class CreateConnectorHandler
 
         var exists = await _repository.ExistsAsync(
             command.ExternalSystemId,
+            command.Name,
             command.Protocol,
             cancellationToken);
 

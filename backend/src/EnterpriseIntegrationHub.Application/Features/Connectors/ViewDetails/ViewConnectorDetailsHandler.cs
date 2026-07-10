@@ -3,11 +3,11 @@ using EnterpriseIntegrationHub.Application.Interfaces;
 
 namespace EnterpriseIntegrationHub.Application.Features.Connectors.ViewDetails;
 
-public sealed class ViewDetailsHandler
+public sealed class ViewConnectorDetailsHandler
 {
     private readonly IConnectorRepository _repository;
 
-    public ViewDetailsHandler(IConnectorRepository repository)
+    public ViewConnectorDetailsHandler(IConnectorRepository repository)
     {
         _repository = repository;
     }
