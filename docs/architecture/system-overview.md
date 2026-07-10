@@ -69,19 +69,30 @@ Contains:
 
 ---
 
-## Current Module
+## Current Modules
 
 ### External Systems
 
-Current functionality:
+Status
 
-- Register External System
-- Prevent duplicate registrations
-- Persist External System
+✅ Complete (Sprint 1)
 
-Future modules:
+Implemented Use Cases
 
-- Connectors
-- Workflows
-- Transformations
-- Integration Executions
+- Create External System
+- Browse External Systems
+- View External System Details
+
+Future Enhancements
+
+- Update
+- Activate
+- Deactivate
+
+---
+
+### Connector Management
+
+Status
+
+🚧 Planned (Sprint 2)

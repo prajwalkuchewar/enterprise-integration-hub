@@ -1,15 +1,58 @@
-v0.1 Project Foundation
+# Enterprise Integration Hub Roadmap
 
-v0.2 Authentication
+## Sprint 1 ✅
 
-v0.3 Connector Management
+External System Management
 
-v0.4 Workflow Engine
+- [x] Create External System
+- [x] Browse External Systems
+- [x] View External System Details
+- [ ] Update External System
+- [ ] Activate External System
+- [ ] Deactivate External System
 
-v0.5 Audit Module
+---
 
-v0.6 Kafka Integration
+## Sprint 2
 
-v0.7 Dashboard
+Connector Management
 
-v1.0 Production Release
+- [ ] Create Connector
+- [ ] Browse Connectors
+- [ ] View Connector Details
+- [ ] Activate Connector
+- [ ] Deactivate Connector
+
+---
+
+## Sprint 3
+
+Workflow Management
+
+- [ ] Create Workflow
+- [ ] Browse Workflows
+- [ ] View Workflow Details
+
+---
+
+## Sprint 4
+
+Workflow Steps
+
+---
+
+## Sprint 5
+
+Transformation Engine
+
+---
+
+## Sprint 6
+
+Integration Execution
+
+---
+
+## Sprint 7
+
+Operations & Monitoring

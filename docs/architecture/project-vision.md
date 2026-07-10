@@ -36,7 +36,11 @@ The first version of EIH focuses on the administrative capabilities required bef
 
 Current capabilities include:
 
-- External System Management
+External System Management
+
+- Register enterprise systems
+- Browse registered systems
+- View system details
 
 Upcoming capabilities include:
 

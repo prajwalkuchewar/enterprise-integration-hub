@@ -1,12 +1,8 @@
-# Enterprise Integration Hub (EIH)
-
-## Architecture Discovery Log — Session 1
+# Architecture Discovery Log — Session 1
 
 **Project Stage:** Sprint 1 - Domain Discovery
 
----
-
-# 1. Project Vision
+## 1. Project Vision
 
 The Enterprise Integration Hub (EIH) is an enterprise platform responsible for enabling secure, reliable, observable, and standardized exchange of business events between independent enterprise systems.
 
@@ -14,7 +10,7 @@ The platform does **not** own business data. Instead, it owns the process of mov
 
 ---
 
-# 2. Business Problem
+## 2. Business Problem
 
 Large organizations operate many independent systems such as:
 
@@ -41,13 +37,13 @@ The Enterprise Integration Hub solves these problems by acting as a centralized 
 
 ---
 
-# 3. Core Mission
+## 3. Core Mission
 
 > Move business events safely, reliably, observably, and consistently between enterprise systems.
 
 ---
 
-# 4. Responsibilities of the Platform
+## 4. Responsibilities of the Platform
 
 The platform owns the integration process, not the business data.
 
@@ -65,7 +61,7 @@ Its responsibilities include:
 
 ---
 
-# 5. Responsibilities the Platform Does NOT Own
+## 5. Responsibilities the Platform Does NOT Own
 
 The Enterprise Integration Hub is **not** the source of truth for business data.
 
@@ -82,9 +78,9 @@ The Integration Hub only manages the movement of this information.
 
 ---
 
-# 6. Important Architectural Lessons
+## 6. Important Architectural Lessons
 
-## Lesson 1
+### Lesson 1
 
 Software exists to solve business problems.
 
@@ -94,7 +90,7 @@ Business → Software → Technology
 
 ---
 
-## Lesson 2
+### Lesson 2
 
 Architects think in business capabilities.
 
@@ -116,7 +112,7 @@ Capabilities define the software.
 
 ---
 
-## Lesson 3
+### Lesson 3
 
 Responsibilities create modules.
 
@@ -126,7 +122,7 @@ Business responsibilities naturally lead to software modules.
 
 ---
 
-## Lesson 4
+### Lesson 4
 
 The Integration Hub is the operational owner of information exchange.
 
@@ -134,11 +130,11 @@ It is **not** the owner of business information.
 
 ---
 
-# 7. Domain Concepts Discovered
+## 7. Domain Concepts Discovered
 
-## External System
+### External System
 
-### Responsibility
+#### Responsibility
 
 Represents an enterprise application that participates in integrations.
 
@@ -154,9 +150,9 @@ An External System represents the business identity of an application.
 
 It does not define how communication occurs. That responsibility belongs to one or more Connectors.
 
-## Connector
+### Connector
 
-### Responsibility
+#### Responsibility
 
 Represents the communication contract required to interact with a single External System.
 
@@ -173,9 +169,9 @@ A Connector defines:
 
 A Connector knows how to communicate with an External System but does not define business workflows or store execution history.
 
-## Workflow
+### Workflow
 
-### Responsibility
+#### Responsibility
 
 Defines a business integration process.
 
@@ -189,9 +185,9 @@ A Workflow defines:
 - Execution Strategy (Sequential/Parallel - future)
 - Activation Status
 
-## Workflow Step
+### Workflow Step
 
-### Responsibility
+#### Responsibility
 
 Represents a single integration action within a Workflow.
 
@@ -205,9 +201,9 @@ Each Workflow Step defines:
 
 A Workflow may contain one or many Workflow Steps.
 
-## Transformation
+### Transformation
 
-### Responsibility
+#### Responsibility
 
 Defines how business data is transformed from the source system schema into the destination system schema.
 
@@ -222,9 +218,9 @@ Transformation responsibilities include:
 
 A Transformation focuses solely on data conversion and contains no workflow or communication logic.
 
-## Integration Execution
+### Integration Execution
 
-### Responsibility
+#### Responsibility
 
 Represents one execution attempt of a workflow.
 An Integration Execution represents the runtime instance of a Workflow execution.
@@ -243,9 +239,9 @@ Each execution records:
 
 Executions are created every time a workflow runs.
 
-## Audit Log
+### Audit Log
 
-### Responsibility
+#### Responsibility
 
 Stores evidence of what happened during an Integration Execution.
 
@@ -261,7 +257,7 @@ Audit Logs are immutable historical records and should never be modified after c
 
 ---
 
-# 8. Domain Relationships (Current Understanding)
+## 8. Domain Relationships (Current Understanding)
 
 ```text
 
@@ -292,7 +288,7 @@ Each concept owns a distinct responsibility and evolves independently.
 
 ---
 
-# 9. Design Principles Established
+## 9. Design Principles Established
 
 - Design from business problems, not technology choices.
 - Business capabilities define system modules.
@@ -304,7 +300,7 @@ Each concept owns a distinct responsibility and evolves independently.
 
 ---
 
-# 10. Open Questions
+## 10. Open Questions
 
 These will guide future design sessions.
 
@@ -324,7 +320,7 @@ These will guide future design sessions.
 
 ---
 
-# Current Domain Model (v0.1)
+## Current Domain Model (v0.1)
 
 ```
 Enterprise Integration Hub
@@ -354,21 +350,9 @@ Enterprise Integration Hub
 
 ---
 
-## Sensei's Rule #1
-
-**Responsibilities before Components.**
-
-Never ask:
-
-> "What controller should I build?"
-
-Instead ask:
-
-> "What responsibility does the business need fulfilled?"
-
 The software design should emerge naturally from the answer.
 
-# Domain Modeling Principles
+## Domain Modeling Principles
 
 1. External Systems own business data.
 2. Connectors own communication configuration.
@@ -377,3 +361,31 @@ The software design should emerge naturally from the answer.
 5. Integration Executions own runtime state.
 6. Audit Logs own historical evidence.
 7. Configuration objects and runtime objects should always be separated.
+
+# Session 2 — External System Module Completed
+
+## New Concepts Introduced
+
+- Commands
+- Queries
+- Handler Pattern
+- Response Models
+- Read Models
+- Repository Pattern
+- Unit Testing
+
+---
+
+## Architectural Decisions
+
+The External System capability has been established as the first administrative module.
+
+Three primary use cases have been implemented:
+
+- Create External System
+- Browse External Systems
+- View External System Details
+
+These use cases establish the project's standard vertical slice architecture.
+
+Future capabilities should follow the same development approach.
