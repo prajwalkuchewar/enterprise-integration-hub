@@ -7,11 +7,12 @@ namespace EnterpriseIntegrationHub.Application.Interfaces
     {
         Task<bool> ExistsAsync(Guid externalSystemId, string name, CancellationToken cancellationToken);
 
-        Task AddAsync( Connector connector, CancellationToken cancellationToken);
+        Task AddAsync(Connector connector, CancellationToken cancellationToken);
 
         Task<IReadOnlyCollection<Connector>> GetAllAsync(CancellationToken cancellationToken);
 
         Task<Connector?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
+        Task UpdateAsync(Connector connector, CancellationToken cancellationToken);
     }
 }

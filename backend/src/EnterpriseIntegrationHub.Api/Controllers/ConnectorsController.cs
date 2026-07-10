@@ -1,4 +1,5 @@
 using EnterpriseIntegrationHub.Api.Contracts.Requests;
+using EnterpriseIntegrationHub.Application.Features.Connectors.Activate;
 using EnterpriseIntegrationHub.Application.Features.Connectors.Browse;
 using EnterpriseIntegrationHub.Application.Features.Connectors.Create;
 using EnterpriseIntegrationHub.Application.Features.Connectors.ViewDetails;
@@ -18,6 +19,7 @@ public sealed class ConnectorsController : ControllerBase
     private readonly CreateConnectorHandler _createHandler;
     private readonly BrowseConnectorsHandler _browseHandler;
     private readonly ViewConnectorDetailsHandler _viewDetailsHandler;
+    private readonly ActivateConnectorHandler _activateHandler;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConnectorsController"/> class.
@@ -25,11 +27,13 @@ public sealed class ConnectorsController : ControllerBase
     public ConnectorsController(
         CreateConnectorHandler createHandler,
         BrowseConnectorsHandler browseHandler,
-        ViewConnectorDetailsHandler viewDetailsHandler)
+        ViewConnectorDetailsHandler viewDetailsHandler,
+        ActivateConnectorHandler activateHandler)
     {
         _createHandler = createHandler;
         _browseHandler = browseHandler;
         _viewDetailsHandler = viewDetailsHandler;
+        _activateHandler = activateHandler;
     }
 
     /// <summary>
@@ -46,12 +50,12 @@ public sealed class ConnectorsController : ControllerBase
     public async Task<IActionResult> Create(CreateConnectorRequest request, CancellationToken cancellationToken)
     {
         var command = new CreateConnectorCommand(
-            request.Name, 
-            request.Description, 
-            request.ExternalSystemId, 
-            request.BaseUrl, 
-            request.Protocol, 
-            request.AuthenticationType, 
+            request.Name,
+            request.Description,
+            request.ExternalSystemId,
+            request.BaseUrl,
+            request.Protocol,
+            request.AuthenticationType,
             request.TimeoutSeconds);
 
         try
@@ -98,7 +102,7 @@ public sealed class ConnectorsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ViewDetails([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-            var query = new ViewConnectorDetailsQuery(id);
+        var query = new ViewConnectorDetailsQuery(id);
         try
         {
             var response = await _viewDetailsHandler.Handle(query, cancellationToken);
@@ -107,6 +111,40 @@ public sealed class ConnectorsController : ControllerBase
         catch (KeyNotFoundException exception)
         {
             return NotFound(new { message = exception.Message });
+        }
+    }
+
+    /// <summary>
+    /// Activates a draft connector.
+    /// </summary>
+    /// <param name="id">Connector id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>204 No Content, 404 Not Found, or 409 Conflict.</returns>
+    [HttpPost("{id:guid}/activate")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Activate([FromRoute] Guid id, CancellationToken cancellationToken)
+    {
+        var command = new ActivateConnectorCommand(id);
+
+        try
+        {
+            await _activateHandler.Handle(command, cancellationToken);
+            return NoContent();
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(new { message = exception.Message });
+        }
+        catch (KeyNotFoundException exception)
+        {
+            return NotFound(new { message = exception.Message });
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Conflict(new { message = exception.Message });
         }
     }
 }

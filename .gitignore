@@ -50,7 +50,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
-
+**.sql
 # Temporary files
 *.tmp
 *.temp

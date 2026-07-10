@@ -1,4 +1,5 @@
 using EnterpriseIntegrationHub.Api.Extensions;
+using EnterpriseIntegrationHub.Application.Features.Connectors.Activate;
 using EnterpriseIntegrationHub.Application.Features.Connectors.Create;
 using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Create;
 using EnterpriseIntegrationHub.Application.Features.Connectors.Browse;
@@ -44,6 +45,7 @@ namespace EnterpriseIntegrationHub.Api
             services.AddScoped<CreateConnectorHandler>();
             services.AddScoped<BrowseConnectorsHandler>();
             services.AddScoped<ViewConnectorDetailsHandler>();
+            services.AddScoped<ActivateConnectorHandler>();
             services.AddScoped<IConnectorRepository, ConnectorRepository>();
 
             // Cross-origin requests (adjust origins as needed)
