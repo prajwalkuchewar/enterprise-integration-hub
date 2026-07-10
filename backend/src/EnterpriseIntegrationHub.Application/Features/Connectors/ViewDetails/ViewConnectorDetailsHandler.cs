@@ -18,7 +18,7 @@ public sealed class ViewConnectorDetailsHandler
 
         if(item is null)
         {
-            throw new KeyNotFoundException($"External system with ID {query.Id} not found.");
+            throw new KeyNotFoundException($"Connector with ID {query.Id} not found.");
         }
 
         var details = new ConnectorSummary(

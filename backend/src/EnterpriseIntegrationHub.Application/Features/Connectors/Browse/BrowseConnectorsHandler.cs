@@ -17,7 +17,6 @@ public sealed class BrowseConnectorsHandler
         var items = await _repository.GetAllAsync(cancellationToken);
 
         var summaries = items
-            .OrderBy(x => x.Name)
             .Select(x => new ConnectorSummary(
             Id: x.Id,
             Name: x.Name,

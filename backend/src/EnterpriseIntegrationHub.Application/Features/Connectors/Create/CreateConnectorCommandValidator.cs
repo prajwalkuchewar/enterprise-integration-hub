@@ -22,6 +22,6 @@ public sealed class CreateConnectorCommandValidator
             throw new ArgumentException("BaseUrl must be a valid absolute HTTP/HTTPS URL.", nameof(command.BaseUrl));
 
         if (command.TimeoutSeconds <= 0)
-            throw new ArgumentException("TimeoutSeconds must be zero or positive.", nameof(command.TimeoutSeconds));
+            throw new ArgumentException("TimeoutSeconds must be a positive number.", nameof(command.TimeoutSeconds));
     }
 }
