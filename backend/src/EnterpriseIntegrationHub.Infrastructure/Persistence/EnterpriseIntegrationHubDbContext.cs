@@ -12,6 +12,7 @@ public class EnterpriseIntegrationHubDbContext : DbContext
     }
 
     public DbSet<ExternalSystem> ExternalSystems => Set<ExternalSystem>();
+    public DbSet<Connector> Connectors => Set<Connector>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

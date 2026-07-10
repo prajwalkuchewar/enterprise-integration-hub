@@ -2,7 +2,7 @@ using EnterpriseIntegrationHub.Domain.Enums;
 
 namespace EnterpriseIntegrationHub.Application.Contracts.Responses;
 
-public sealed record BrowseExternalSystemsResponseModel(
+public sealed record ExternalSystemsResponseModel(
     IReadOnlyCollection<ExternalSystemSummary> Items,
     int TotalCount
 );

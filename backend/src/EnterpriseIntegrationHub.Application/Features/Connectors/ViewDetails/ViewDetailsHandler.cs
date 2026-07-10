@@ -1,18 +1,18 @@
 using EnterpriseIntegrationHub.Application.Contracts.Responses;
 using EnterpriseIntegrationHub.Application.Interfaces;
 
-namespace EnterpriseIntegrationHub.Application.Features.ExternalSystems.ViewDetails;
+namespace EnterpriseIntegrationHub.Application.Features.Connectors.ViewDetails;
 
 public sealed class ViewDetailsHandler
 {
-    private readonly IExternalSystemRepository _repository;
+    private readonly IConnectorRepository _repository;
 
-    public ViewDetailsHandler(IExternalSystemRepository repository)
+    public ViewDetailsHandler(IConnectorRepository repository)
     {
         _repository = repository;
     }
 
-    public async Task<ExternalSystemSummary> Handle(ViewDetailsQuery query, CancellationToken cancellationToken)
+    public async Task<ConnectorSummary> Handle(ViewDetailsQuery query, CancellationToken cancellationToken)
     {
         var item = await _repository.GetByIdAsync(query.Id,cancellationToken);
 
@@ -21,11 +21,15 @@ public sealed class ViewDetailsHandler
             throw new KeyNotFoundException($"External system with ID {query.Id} not found.");
         }
 
-        var details = new ExternalSystemSummary(
+        var details = new ConnectorSummary(
             Id: item.Id,
             Name: item.Name,
             Description: item.Description,
-            Environment: item.Environment,
+            ExternalSystemId: item.ExternalSystemId,
+            BaseUrl: item.BaseUrl,
+            Protocol: item.Protocol,
+            AuthenticationType: item.AuthenticationType,
+            TimeoutSeconds: item.TimeoutSeconds,
             Status: item.Status);
 
         return details;

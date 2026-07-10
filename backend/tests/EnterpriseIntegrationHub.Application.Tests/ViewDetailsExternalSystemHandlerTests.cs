@@ -21,8 +21,8 @@ public class ViewDetailsExternalSystemHandlerTests
         repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ExternalSystem?)null);
 
-        var handler = new ViewDetailsExternalSystemHandler(repo.Object);
-        var query = new ViewDetailsExternalSystemQuery(Guid.NewGuid());
+        var handler = new ViewDetailsHandler(repo.Object);
+        var query = new ViewDetailsQuery(Guid.NewGuid());
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() => handler.Handle(query, CancellationToken.None));
     }
@@ -35,8 +35,8 @@ public class ViewDetailsExternalSystemHandlerTests
         repo.Setup(r => r.GetByIdAsync(entity.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(entity);
 
-        var handler = new ViewDetailsExternalSystemHandler(repo.Object);
-        var query = new ViewDetailsExternalSystemQuery(entity.Id);
+        var handler = new ViewDetailsHandler(repo.Object);
+        var query = new ViewDetailsQuery(entity.Id);
 
         var result = await handler.Handle(query, CancellationToken.None);
 
