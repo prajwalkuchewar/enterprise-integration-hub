@@ -17,6 +17,11 @@ public sealed class CreateExternalSystemHandler
         CreateExternalSystemCommand command,
         CancellationToken cancellationToken)
     {
+
+        // Validate command early to protect application/business rules
+        var validator = new CreateExternalSystemCommandValidator();
+        validator.Validate(command);
+
         var exists = await _repository.ExistsAsync(
             command.Name,
             command.Environment,

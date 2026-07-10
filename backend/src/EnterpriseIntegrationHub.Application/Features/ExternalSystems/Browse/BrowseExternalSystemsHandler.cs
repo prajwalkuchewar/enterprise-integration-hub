@@ -5,28 +5,28 @@ namespace EnterpriseIntegrationHub.Application.Features.ExternalSystems.Browse;
 
 public sealed class BrowseExternalSystemsHandler
 {
-    private readonly IExternalSystemRepository _repository;
+  private readonly IExternalSystemRepository _repository;
 
-    public BrowseExternalSystemsHandler(IExternalSystemRepository repository)
-    {
-        _repository = repository;
-    }
+  public BrowseExternalSystemsHandler(IExternalSystemRepository repository)
+  {
+    _repository = repository;
+  }
 
-    public async Task<BrowseExternalSystemsResponseModel> Handle(BrowseExternalSystemsQuery query, CancellationToken cancellationToken)
-    {
-        var items = await _repository.GetAllAsync(cancellationToken);
+  public async Task<ExternalSystemsResponseModel> Handle(BrowseExternalSystemsQuery query, CancellationToken cancellationToken)
+  {
+    var items = await _repository.GetAllAsync(cancellationToken);
 
-        var summaries = items
-            .Select(x => new ExternalSystemSummary(
-            Id: x.Id,
-            Name: x.Name,
-            Description: x.Description,
-            Environment: x.Environment,
-            Status: x.Status))
-            .ToList();
+    var summaries = items
+        .Select(x => new ExternalSystemSummary(
+        Id: x.Id,
+        Name: x.Name,
+        Description: x.Description,
+        Environment: x.Environment,
+        Status: x.Status))
+        .ToList();
 
-        return new BrowseExternalSystemsResponseModel(
-            summaries,
-            summaries.Count);
-    }
+    return new ExternalSystemsResponseModel(
+        summaries,
+        summaries.Count);
+  }
 }

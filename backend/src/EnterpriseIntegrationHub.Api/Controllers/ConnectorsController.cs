@@ -1,31 +1,31 @@
 using EnterpriseIntegrationHub.Api.Contracts.Requests;
-using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Browse;
-using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Create;
-using EnterpriseIntegrationHub.Application.Features.ExternalSystems.ViewDetails;
+using EnterpriseIntegrationHub.Application.Features.Connectors.Browse;
+using EnterpriseIntegrationHub.Application.Features.Connectors.Create;
+using EnterpriseIntegrationHub.Application.Features.Connectors.ViewDetails;
 using EnterpriseIntegrationHub.Application.Contracts.Responses;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnterpriseIntegrationHub.Api.Controllers;
 
 /// <summary>
-/// Controller for managing external systems.
+/// Controller for managing Connectors.
 /// </summary>
 [ApiController]
-[Route("api/external-systems")]
+[Route("api/connectors")]
 [Produces("application/json")]
-public sealed class ExternalSystemsController : ControllerBase
+public sealed class ConnectorsController : ControllerBase
 {
-    private readonly CreateExternalSystemHandler _createHandler;
-    private readonly BrowseExternalSystemsHandler _browseHandler;
-    private readonly ViewExternalSystemDetailsHandler _viewDetailsHandler;
+    private readonly CreateConnectorHandler _createHandler;
+    private readonly BrowseConnectorsHandler _browseHandler;
+    private readonly ViewConnectorDetailsHandler _viewDetailsHandler;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ExternalSystemsController"/> class.
+    /// Initializes a new instance of the <see cref="ConnectorsController"/> class.
     /// </summary>
-    public ExternalSystemsController(
-        CreateExternalSystemHandler createHandler,
-        BrowseExternalSystemsHandler browseHandler,
-        ViewExternalSystemDetailsHandler viewDetailsHandler)
+    public ConnectorsController(
+        CreateConnectorHandler createHandler,
+        BrowseConnectorsHandler browseHandler,
+        ViewConnectorDetailsHandler viewDetailsHandler)
     {
         _createHandler = createHandler;
         _browseHandler = browseHandler;
@@ -33,7 +33,7 @@ public sealed class ExternalSystemsController : ControllerBase
     }
 
     /// <summary>
-    /// Creates a new external system.
+    /// Creates a new connector.
     /// </summary>
     /// <param name="request">Create request payload.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -43,17 +43,21 @@ public sealed class ExternalSystemsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Create(CreateExternalSystemRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create(CreateConnectorRequest request, CancellationToken cancellationToken)
     {
-        var command = new CreateExternalSystemCommand(
-            request.Name,
+        var command = new CreateConnectorCommand(
+            request.Name, 
             request.Description, 
-            request.Environment);
+            request.ExternalSystemId, 
+            request.BaseUrl, 
+            request.Protocol, 
+            request.AuthenticationType, 
+            request.TimeoutSeconds);
 
         try
         {
             var id = await _createHandler.Handle(command, cancellationToken);
-            return Created($"/api/external-systems/{id}", new { id });
+            return Created($"/api/connectors/{id}", new { id });
         }
         catch (ArgumentException exception)
         {
@@ -70,31 +74,31 @@ public sealed class ExternalSystemsController : ControllerBase
     }
 
     /// <summary>
-    /// Browse external systems.
+    /// Browse connectors.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>200 OK with a list of external system summaries.</returns>
+    /// <returns>200 OK with a list of connector summaries.</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(ExternalSystemsResponseModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ConnectorsResponseModel), StatusCodes.Status200OK)]
     public async Task<IActionResult> Browse(CancellationToken cancellationToken)
     {
-        var query = new BrowseExternalSystemsQuery();
+        var query = new BrowseConnectorsQuery();
         var response = await _browseHandler.Handle(query, cancellationToken);
         return Ok(response);
     }
 
     /// <summary>
-    /// View external system detail by id.
+    /// View connector detail by id.
     /// </summary>
-    /// <param name="id">External system id.</param>
+    /// <param name="id">Connector id.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>200 OK with details, or 404 NotFound if the id does not exist.</returns>
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(ExternalSystemSummary), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ConnectorSummary), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ViewDetails([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-            var query = new ViewExternalSystemDetailsQuery(id);
+            var query = new ViewConnectorDetailsQuery(id);
         try
         {
             var response = await _viewDetailsHandler.Handle(query, cancellationToken);

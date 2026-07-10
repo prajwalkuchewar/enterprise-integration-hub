@@ -19,8 +19,8 @@ public class BrowseExternalSystemsHandlerTests
     {
         var items = new List<ExternalSystem>
         {
-            new ExternalSystem("A", "descA", ExternalSystemEnvironment.Development, ExternalSystemStatus.Active),
-            new ExternalSystem("B", "descB", ExternalSystemEnvironment.Production, ExternalSystemStatus.Active)
+            new ExternalSystem("System A", "Description A", ExternalSystemEnvironment.Development, ExternalSystemStatus.Active),
+            new ExternalSystem("System B", "Description B", ExternalSystemEnvironment.Testing, ExternalSystemStatus.Inactive)
         };
 
         var repo = new Mock<IExternalSystemRepository>();
@@ -34,6 +34,27 @@ public class BrowseExternalSystemsHandlerTests
 
         result.Should().NotBeNull();
         result.TotalCount.Should().Be(items.Count);
-        result.Items.Select(i => i.Name).Should().BeEquivalentTo(items.Select(x => x.Name));
+        result.Items.Should().HaveCount(items.Count);
+
+        var resultNames = result.Items.Select(i => i.Name).ToList();
+        var expectedNames = items.Select(x => x.Name).OrderBy(x => x).ToList();
+        resultNames.Should().BeEquivalentTo(expectedNames);
+    }
+
+    [Fact]
+    public async Task Handle_WhenNoSystems_ReturnsEmptyListAndZeroCount()
+    {
+        var repo = new Mock<IExternalSystemRepository>();
+        repo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ExternalSystem>().AsReadOnly());
+
+        var handler = new BrowseExternalSystemsHandler(repo.Object);
+        var query = new BrowseExternalSystemsQuery();
+
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.TotalCount.Should().Be(0);
+        result.Items.Should().BeEmpty();
     }
 }

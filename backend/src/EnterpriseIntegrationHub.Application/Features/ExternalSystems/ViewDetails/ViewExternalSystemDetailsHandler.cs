@@ -3,16 +3,16 @@ using EnterpriseIntegrationHub.Application.Interfaces;
 
 namespace EnterpriseIntegrationHub.Application.Features.ExternalSystems.ViewDetails;
 
-public sealed class ViewDetailsExternalSystemHandler
+public sealed class ViewExternalSystemDetailsHandler
 {
     private readonly IExternalSystemRepository _repository;
 
-    public ViewDetailsExternalSystemHandler(IExternalSystemRepository repository)
+    public ViewExternalSystemDetailsHandler(IExternalSystemRepository repository)
     {
         _repository = repository;
     }
 
-    public async Task<ExternalSystemSummary> Handle(ViewDetailsExternalSystemQuery query, CancellationToken cancellationToken)
+    public async Task<ExternalSystemSummary> Handle(ViewExternalSystemDetailsQuery query, CancellationToken cancellationToken)
     {
         var item = await _repository.GetByIdAsync(query.Id,cancellationToken);
 
