@@ -21,7 +21,7 @@ public sealed class CreateConnectorCommandValidator
         if (!Uri.TryCreate(command.BaseUrl, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
             throw new ArgumentException("BaseUrl must be a valid absolute HTTP/HTTPS URL.", nameof(command.BaseUrl));
 
-        if (command.TimeoutSeconds < 0)
+        if (command.TimeoutSeconds <= 0)
             throw new ArgumentException("TimeoutSeconds must be zero or positive.", nameof(command.TimeoutSeconds));
     }
 }

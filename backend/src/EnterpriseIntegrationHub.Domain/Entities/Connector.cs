@@ -22,26 +22,6 @@ namespace EnterpriseIntegrationHub.Domain.Entities
 
         public Connector(string name, string description, Guid externalSystemId, string baseUrl, ConnectorProtocol protocol, ConnectorAuthenticationType authenticationType, int timeoutSeconds, ConnectorStatus status)
         {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                throw new ArgumentException("Name is required.", nameof(name));
-            }
-
-            if (externalSystemId == Guid.Empty)
-            {
-                throw new ArgumentException("ExternalSystemId must be provided.", nameof(externalSystemId));
-            }
-
-            if (string.IsNullOrWhiteSpace(baseUrl))
-            {
-                throw new ArgumentException("BaseUrl is required.", nameof(baseUrl));
-            }
-
-            if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
-            {
-                throw new ArgumentException("BaseUrl must be a valid absolute HTTP/HTTPS URL.", nameof(baseUrl));
-            }
-
             Name = name;
             Description = description;
             ExternalSystemId = externalSystemId;
@@ -51,8 +31,5 @@ namespace EnterpriseIntegrationHub.Domain.Entities
             TimeoutSeconds = timeoutSeconds;
             Status = status;
         }
-
-
-
     }
 }

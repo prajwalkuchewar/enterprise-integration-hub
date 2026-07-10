@@ -16,16 +16,16 @@ namespace EnterpriseIntegrationHub.Api.Controllers;
 public sealed class ConnectorsController : ControllerBase
 {
     private readonly CreateConnectorHandler _createHandler;
-    private readonly EnterpriseIntegrationHub.Application.Features.Connectors.Browse.BrowseConnectorsHandler _browseHandler;
-    private readonly EnterpriseIntegrationHub.Application.Features.Connectors.ViewDetails.ViewConnectorDetailsHandler _viewDetailsHandler;
+    private readonly BrowseConnectorsHandler _browseHandler;
+    private readonly ViewConnectorDetailsHandler _viewDetailsHandler;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConnectorsController"/> class.
     /// </summary>
     public ConnectorsController(
         CreateConnectorHandler createHandler,
-        EnterpriseIntegrationHub.Application.Features.Connectors.Browse.BrowseConnectorsHandler browseHandler,
-        EnterpriseIntegrationHub.Application.Features.Connectors.ViewDetails.ViewConnectorDetailsHandler viewDetailsHandler)
+        BrowseConnectorsHandler browseHandler,
+        ViewConnectorDetailsHandler viewDetailsHandler)
     {
         _createHandler = createHandler;
         _browseHandler = browseHandler;
@@ -71,11 +71,6 @@ public sealed class ConnectorsController : ControllerBase
         {
             return NotFound(new { message = exception.Message });
         }
-        catch (Exception exception)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                new { message = "An unexpected error occurred." });
-        }
     }
 
     /// <summary>
@@ -87,7 +82,7 @@ public sealed class ConnectorsController : ControllerBase
     [ProducesResponseType(typeof(ConnectorsResponseModel), StatusCodes.Status200OK)]
     public async Task<IActionResult> Browse(CancellationToken cancellationToken)
     {
-        var query = new BrowseQuery();
+        var query = new BrowseConnectorsQuery();
         var response = await _browseHandler.Handle(query, cancellationToken);
         return Ok(response);
     }
@@ -103,7 +98,7 @@ public sealed class ConnectorsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ViewDetails([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-            var query = new ViewDetailsQuery(id);
+            var query = new ViewConnectorDetailsQuery(id);
         try
         {
             var response = await _viewDetailsHandler.Handle(query, cancellationToken);

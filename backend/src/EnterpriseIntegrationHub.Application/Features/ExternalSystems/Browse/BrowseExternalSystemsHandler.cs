@@ -12,7 +12,7 @@ public sealed class BrowseExternalSystemsHandler
     _repository = repository;
   }
 
-  public async Task<ExternalSystemsResponseModel> Handle(BrowseQuery query, CancellationToken cancellationToken)
+  public async Task<ExternalSystemsResponseModel> Handle(BrowseExternalSystemsQuery query, CancellationToken cancellationToken)
   {
     var items = await _repository.GetAllAsync(cancellationToken);
 

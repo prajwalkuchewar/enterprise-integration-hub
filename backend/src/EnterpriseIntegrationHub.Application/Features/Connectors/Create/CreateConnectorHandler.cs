@@ -30,19 +30,24 @@ public sealed class CreateConnectorHandler
 
         if (externalSystem == null)
         {
-            throw new InvalidOperationException(
+            throw new KeyNotFoundException(
                 $"External system with ID {command.ExternalSystemId} not found.");
+        }
+
+        if(externalSystem.Status != ExternalSystemStatus.Active)
+        {
+            throw new InvalidOperationException(
+                $"External system with ID {command.ExternalSystemId} is not active.");
         }
 
         var exists = await _repository.ExistsAsync(
             command.ExternalSystemId,
             command.Name,
-            command.Protocol,
             cancellationToken);
 
         if (exists)
         {
-            throw new InvalidOperationException($"Connector with name '{command.Name}' and External System '{command.ExternalSystemId}' and Protocol '{command.Protocol}' already exists.");
+            throw new InvalidOperationException($"Connector with name '{command.Name}' and External System '{command.ExternalSystemId}' already exists.");
         }
 
         var connector = new Connector(

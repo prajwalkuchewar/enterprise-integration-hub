@@ -23,7 +23,7 @@ public class ViewDetailsConnectorHandlerTests
         .ReturnsAsync((Connector?)null);
 
     var handler = new ViewConnectorDetailsHandler(repo.Object);
-    var query = new ViewDetailsQuery(Guid.NewGuid());
+    var query = new ViewConnectorDetailsQuery(Guid.NewGuid());
 
     // Act & Assert
     await Assert.ThrowsAsync<KeyNotFoundException>(() =>
@@ -50,7 +50,7 @@ public class ViewDetailsConnectorHandlerTests
         .ReturnsAsync(connector);
 
     var handler = new ViewConnectorDetailsHandler(repo.Object);
-    var query = new ViewDetailsQuery(connector.Id);
+    var query = new ViewConnectorDetailsQuery(connector.Id);
 
     // Act
     var result = await handler.Handle(query, CancellationToken.None);
@@ -91,7 +91,7 @@ public class ViewDetailsConnectorHandlerTests
         .ReturnsAsync(connector);
 
     var handler = new ViewConnectorDetailsHandler(repo.Object);
-    var query = new ViewDetailsQuery(connector.Id);
+    var query = new ViewConnectorDetailsQuery(connector.Id);
 
     // Act
     var result = await handler.Handle(query, CancellationToken.None);
@@ -124,7 +124,7 @@ public class ViewDetailsConnectorHandlerTests
         .ReturnsAsync(connector);
 
     var handler = new ViewConnectorDetailsHandler(repo.Object);
-    var query = new ViewDetailsQuery(connector.Id);
+    var query = new ViewConnectorDetailsQuery(connector.Id);
 
     // Act
     var result = await handler.Handle(query, CancellationToken.None);
@@ -156,7 +156,7 @@ public class ViewDetailsConnectorHandlerTests
         .ReturnsAsync(connector);
 
     var handler = new ViewConnectorDetailsHandler(repo.Object);
-    var query = new ViewDetailsQuery(connector.Id);
+    var query = new ViewConnectorDetailsQuery(connector.Id);
 
     // Act
     var result = await handler.Handle(query, CancellationToken.None);

@@ -22,7 +22,7 @@ public class ViewDetailsExternalSystemHandlerTests
             .ReturnsAsync((ExternalSystem?)null);
 
         var handler = new ViewExternalSystemDetailsHandler(repo.Object);
-        var query = new ViewDetailsQuery(Guid.NewGuid());
+        var query = new ViewExternalSystemDetailsQuery(Guid.NewGuid());
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() => handler.Handle(query, CancellationToken.None));
     }
@@ -36,7 +36,7 @@ public class ViewDetailsExternalSystemHandlerTests
             .ReturnsAsync(entity);
 
         var handler = new ViewExternalSystemDetailsHandler(repo.Object);
-        var query = new ViewDetailsQuery(entity.Id);
+        var query = new ViewExternalSystemDetailsQuery(entity.Id);
 
         var result = await handler.Handle(query, CancellationToken.None);
 

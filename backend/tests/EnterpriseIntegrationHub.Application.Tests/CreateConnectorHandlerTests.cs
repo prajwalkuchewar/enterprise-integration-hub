@@ -1,12 +1,13 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using EnterpriseIntegrationHub.Application.Features.Connectors.Create;
 using EnterpriseIntegrationHub.Application.Interfaces;
 using EnterpriseIntegrationHub.Domain.Entities;
 using EnterpriseIntegrationHub.Domain.Enums;
 using FluentAssertions;
 using Moq;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace EnterpriseIntegrationHub.Application.Tests;
@@ -25,7 +26,7 @@ public class CreateConnectorHandlerTests
   }
 
   [Fact]
-  public async Task Handle_WhenExternalSystemNotFound_ThrowsInvalidOperationException()
+  public async Task Handle_WhenExternalSystemNotFound_ThrowsKeyNotFoundException()
   {
     // Arrange
     var externalSystemId = Guid.NewGuid();
@@ -43,7 +44,7 @@ public class CreateConnectorHandlerTests
         30);
 
     // Act & Assert
-    await Assert.ThrowsAsync<InvalidOperationException>(() =>
+    await Assert.ThrowsAsync<KeyNotFoundException>(() =>
         _handler.Handle(command, CancellationToken.None));
   }
 
@@ -59,7 +60,7 @@ public class CreateConnectorHandlerTests
         .ReturnsAsync(externalSystem);
 
     _connectorRepositoryMock
-        .Setup(r => r.ExistsAsync(externalSystemId, "Test Connector", ConnectorProtocol.REST, It.IsAny<CancellationToken>()))
+        .Setup(r => r.ExistsAsync(externalSystemId, "Test Connector", It.IsAny<CancellationToken>()))
         .ReturnsAsync(true);
 
     var command = new CreateConnectorCommand(
@@ -88,7 +89,7 @@ public class CreateConnectorHandlerTests
         .ReturnsAsync(externalSystem);
 
     _connectorRepositoryMock
-        .Setup(r => r.ExistsAsync(externalSystemId, "Test Connector", ConnectorProtocol.REST, It.IsAny<CancellationToken>()))
+        .Setup(r => r.ExistsAsync(externalSystemId, "Test Connector", It.IsAny<CancellationToken>()))
         .ReturnsAsync(false);
 
     Connector? capturedConnector = null;

@@ -31,7 +31,7 @@ public class BrowseConnectorsHandlerTests
         .ReturnsAsync(items.AsReadOnly());
 
     var handler = new BrowseConnectorsHandler(repo.Object);
-    var query = new BrowseQuery();
+    var query = new BrowseConnectorsQuery();
 
     // Act
     var result = await handler.Handle(query, CancellationToken.None);
@@ -55,7 +55,7 @@ public class BrowseConnectorsHandlerTests
         .ReturnsAsync(new List<Connector>().AsReadOnly());
 
     var handler = new BrowseConnectorsHandler(repo.Object);
-    var query = new BrowseQuery();
+    var query = new BrowseConnectorsQuery();
 
     // Act
     var result = await handler.Handle(query, CancellationToken.None);
@@ -86,7 +86,7 @@ public class BrowseConnectorsHandlerTests
         .ReturnsAsync(new List<Connector> { connector }.AsReadOnly());
 
     var handler = new BrowseConnectorsHandler(repo.Object);
-    var query = new BrowseQuery();
+    var query = new BrowseConnectorsQuery();
 
     // Act
     var result = await handler.Handle(query, CancellationToken.None);
@@ -123,7 +123,7 @@ public class BrowseConnectorsHandlerTests
         .ReturnsAsync(items.AsReadOnly());
 
     var handler = new BrowseConnectorsHandler(repo.Object);
-    var query = new BrowseQuery();
+    var query = new BrowseConnectorsQuery();
 
     // Act
     var result = await handler.Handle(query, CancellationToken.None);

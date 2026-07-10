@@ -16,16 +16,16 @@ namespace EnterpriseIntegrationHub.Api.Controllers;
 public sealed class ExternalSystemsController : ControllerBase
 {
     private readonly CreateExternalSystemHandler _createHandler;
-    private readonly EnterpriseIntegrationHub.Application.Features.ExternalSystems.Browse.BrowseExternalSystemsHandler _browseHandler;
-    private readonly EnterpriseIntegrationHub.Application.Features.ExternalSystems.ViewDetails.ViewExternalSystemDetailsHandler _viewDetailsHandler;
+    private readonly BrowseExternalSystemsHandler _browseHandler;
+    private readonly ViewExternalSystemDetailsHandler _viewDetailsHandler;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ExternalSystemsController"/> class.
     /// </summary>
     public ExternalSystemsController(
         CreateExternalSystemHandler createHandler,
-        EnterpriseIntegrationHub.Application.Features.ExternalSystems.Browse.BrowseExternalSystemsHandler browseHandler,
-        EnterpriseIntegrationHub.Application.Features.ExternalSystems.ViewDetails.ViewExternalSystemDetailsHandler viewDetailsHandler)
+        BrowseExternalSystemsHandler browseHandler,
+        ViewExternalSystemDetailsHandler viewDetailsHandler)
     {
         _createHandler = createHandler;
         _browseHandler = browseHandler;
@@ -45,16 +45,27 @@ public sealed class ExternalSystemsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Create(CreateExternalSystemRequest request, CancellationToken cancellationToken)
     {
-        var command = new CreateExternalSystemCommand(request.Name, request.Description, request.Environment);
+        var command = new CreateExternalSystemCommand(
+            request.Name,
+            request.Description, 
+            request.Environment);
 
         try
         {
             var id = await _createHandler.Handle(command, cancellationToken);
             return Created($"/api/external-systems/{id}", new { id });
         }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(new { message = exception.Message });
+        }
         catch (InvalidOperationException exception)
         {
             return Conflict(new { message = exception.Message });
+        }
+        catch (KeyNotFoundException exception)
+        {
+            return NotFound(new { message = exception.Message });
         }
     }
 
@@ -67,7 +78,7 @@ public sealed class ExternalSystemsController : ControllerBase
     [ProducesResponseType(typeof(ExternalSystemsResponseModel), StatusCodes.Status200OK)]
     public async Task<IActionResult> Browse(CancellationToken cancellationToken)
     {
-        var query = new BrowseQuery();
+        var query = new BrowseExternalSystemsQuery();
         var response = await _browseHandler.Handle(query, cancellationToken);
         return Ok(response);
     }
@@ -83,7 +94,7 @@ public sealed class ExternalSystemsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ViewDetails([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-            var query = new ViewDetailsQuery(id);
+            var query = new ViewExternalSystemDetailsQuery(id);
         try
         {
             var response = await _viewDetailsHandler.Handle(query, cancellationToken);

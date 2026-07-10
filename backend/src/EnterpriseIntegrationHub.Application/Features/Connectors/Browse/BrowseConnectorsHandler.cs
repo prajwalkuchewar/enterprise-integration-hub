@@ -12,7 +12,7 @@ public sealed class BrowseConnectorsHandler
         _repository = repository;
     }
 
-    public async Task<ConnectorsResponseModel> Handle(BrowseQuery query, CancellationToken cancellationToken)
+    public async Task<ConnectorsResponseModel> Handle(BrowseConnectorsQuery query, CancellationToken cancellationToken)
     {
         var items = await _repository.GetAllAsync(cancellationToken);
 

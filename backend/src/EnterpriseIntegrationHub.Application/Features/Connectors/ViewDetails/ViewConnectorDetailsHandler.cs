@@ -12,7 +12,7 @@ public sealed class ViewConnectorDetailsHandler
         _repository = repository;
     }
 
-    public async Task<ConnectorSummary> Handle(ViewDetailsQuery query, CancellationToken cancellationToken)
+    public async Task<ConnectorSummary> Handle(ViewConnectorDetailsQuery query, CancellationToken cancellationToken)
     {
         var item = await _repository.GetByIdAsync(query.Id,cancellationToken);
 

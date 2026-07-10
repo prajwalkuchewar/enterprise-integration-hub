@@ -12,7 +12,7 @@ public sealed class ViewExternalSystemDetailsHandler
         _repository = repository;
     }
 
-    public async Task<ExternalSystemSummary> Handle(ViewDetailsQuery query, CancellationToken cancellationToken)
+    public async Task<ExternalSystemSummary> Handle(ViewExternalSystemDetailsQuery query, CancellationToken cancellationToken)
     {
         var item = await _repository.GetByIdAsync(query.Id,cancellationToken);
 

@@ -28,7 +28,7 @@ public class BrowseExternalSystemsHandlerTests
             .ReturnsAsync(items.AsReadOnly());
 
         var handler = new BrowseExternalSystemsHandler(repo.Object);
-        var query = new BrowseQuery();
+        var query = new BrowseExternalSystemsQuery();
 
         var result = await handler.Handle(query, CancellationToken.None);
 
@@ -49,7 +49,7 @@ public class BrowseExternalSystemsHandlerTests
             .ReturnsAsync(new List<ExternalSystem>().AsReadOnly());
 
         var handler = new BrowseExternalSystemsHandler(repo.Object);
-        var query = new BrowseQuery();
+        var query = new BrowseExternalSystemsQuery();
 
         var result = await handler.Handle(query, CancellationToken.None);
 
