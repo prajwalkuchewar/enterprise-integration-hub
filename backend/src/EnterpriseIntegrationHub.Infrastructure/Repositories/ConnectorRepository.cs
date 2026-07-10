@@ -52,4 +52,9 @@ public sealed class ConnectorRepository : IConnectorRepository
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task UpdateAsync(Connector connector, CancellationToken cancellationToken)
+    {
+        _context.Connectors.Update(connector);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }

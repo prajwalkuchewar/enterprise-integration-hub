@@ -11,7 +11,7 @@ namespace EnterpriseIntegrationHub.Domain.Entities
         public Guid ExternalSystemId { get; private set; }
 
         public string BaseUrl { get; private set; } = string.Empty;
-        
+
         public ConnectorProtocol Protocol { get; private set; }
 
         public ConnectorAuthenticationType AuthenticationType { get; private set; }
@@ -30,6 +30,17 @@ namespace EnterpriseIntegrationHub.Domain.Entities
             AuthenticationType = authenticationType;
             TimeoutSeconds = timeoutSeconds;
             Status = status;
+        }
+
+        public void Activate()
+        {
+            if (Status != ConnectorStatus.Draft)
+            {
+                throw new InvalidOperationException($"Connector with ID {Id} must be in Draft status to activate.");
+            }
+
+            Status = ConnectorStatus.Active;
+            UpdatedAt = DateTimeOffset.UtcNow;
         }
     }
 }

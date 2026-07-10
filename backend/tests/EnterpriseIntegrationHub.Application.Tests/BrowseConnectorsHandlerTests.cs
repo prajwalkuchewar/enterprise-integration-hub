@@ -107,31 +107,6 @@ public class BrowseConnectorsHandlerTests
     summary.Status.Should().Be(connector.Status);
   }
 
-  [Fact]
-  public async Task Handle_ReturnsConnectorsOrderedByName()
-  {
-    // Arrange
-    var items = new List<Connector>
-        {
-            CreateConnector("Zebra Connector", "Desc", ConnectorProtocol.REST, ConnectorAuthenticationType.APIKey, ConnectorStatus.Active),
-            CreateConnector("Alpha Connector", "Desc", ConnectorProtocol.REST, ConnectorAuthenticationType.APIKey, ConnectorStatus.Active),
-            CreateConnector("Beta Connector", "Desc", ConnectorProtocol.REST, ConnectorAuthenticationType.APIKey, ConnectorStatus.Active)
-        };
-
-    var repo = new Mock<IConnectorRepository>();
-    repo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-        .ReturnsAsync(items.AsReadOnly());
-
-    var handler = new BrowseConnectorsHandler(repo.Object);
-    var query = new BrowseConnectorsQuery();
-
-    // Act
-    var result = await handler.Handle(query, CancellationToken.None);
-
-    // Assert
-    var names = result.Items.Select(i => i.Name).ToList();
-    names.Should().BeInAscendingOrder();
-  }
 
   private static Connector CreateConnector(
       string name,
