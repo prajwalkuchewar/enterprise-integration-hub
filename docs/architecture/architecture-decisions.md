@@ -75,3 +75,39 @@ Develop using complete vertical slices.
 Each feature should be functional from API to persistence before moving to the next capability.
 
 This provides working software at every milestone.
+
+---
+
+# ADR-006
+
+## Decision
+
+Separate Command and Query handlers.
+
+## Reason
+
+Write operations and read operations evolve independently.
+
+Separate handlers improve readability and allow future optimizations without affecting unrelated use cases.
+
+Status
+
+Accepted
+
+---
+
+# ADR-007
+
+## Decision
+
+Use Response Models instead of returning Domain Entities from the API.
+
+## Reason
+
+The API should expose contracts tailored to each use case rather than leaking internal domain models.
+
+This allows the Domain Model to evolve independently of API consumers.
+
+Status
+
+Accepted
