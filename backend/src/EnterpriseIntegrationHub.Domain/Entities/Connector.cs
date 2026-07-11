@@ -42,5 +42,16 @@ namespace EnterpriseIntegrationHub.Domain.Entities
             Status = ConnectorStatus.Active;
             UpdatedAt = DateTimeOffset.UtcNow;
         }
+
+        public void Retire()
+        {
+            if (Status != ConnectorStatus.Active)
+            {
+                throw new InvalidOperationException($"Connector with ID {Id} must be in Active status to retire.");
+            }
+
+            Status = ConnectorStatus.Inactive;
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
     }
 }

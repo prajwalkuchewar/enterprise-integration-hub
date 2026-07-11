@@ -5,6 +5,7 @@ using EnterpriseIntegrationHub.Application.Features.Connectors.Create;
 using EnterpriseIntegrationHub.Application.Features.Connectors.ViewDetails;
 using EnterpriseIntegrationHub.Application.Contracts.Responses;
 using Microsoft.AspNetCore.Mvc;
+using EnterpriseIntegrationHub.Application.Features.Connectors.Retire;
 
 namespace EnterpriseIntegrationHub.Api.Controllers;
 
@@ -147,4 +148,41 @@ public sealed class ConnectorsController : ControllerBase
             return Conflict(new { message = exception.Message });
         }
     }
+
+    /// <summary>
+    /// Retires a active connector.
+    /// </summary>
+    /// <param name="id">Connector id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>204 No Content, 404 Not Found, or 409 Conflict.</returns>
+    [HttpPost("{id:guid}/retire")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]    
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Retire([FromRoute] Guid id, CancellationToken cancellationToken)
+    {
+        var command = new RetireConnectorCommand(id);
+
+        try
+        {
+            var retireHandler = HttpContext.RequestServices.GetRequiredService<RetireConnectorHandler>();
+            await retireHandler.Handle(command, cancellationToken);
+            return NoContent();
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(new { message = exception.Message });
+        }
+        catch (KeyNotFoundException exception)
+        {
+            return NotFound(new { message = exception.Message });
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Conflict(new { message = exception.Message });
+        }
+    }
+
+
 }
