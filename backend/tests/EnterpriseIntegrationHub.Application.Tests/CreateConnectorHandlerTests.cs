@@ -60,7 +60,7 @@ public class CreateConnectorHandlerTests
         .ReturnsAsync(externalSystem);
 
     _connectorRepositoryMock
-        .Setup(r => r.ExistsAsync(externalSystemId, "Test Connector", It.IsAny<CancellationToken>()))
+        .Setup(r => r.ExistsAsync(externalSystemId, "Test Connector", It.IsAny<CancellationToken>(), null))
         .ReturnsAsync(true);
 
     var command = new CreateConnectorCommand(
@@ -89,7 +89,7 @@ public class CreateConnectorHandlerTests
         .ReturnsAsync(externalSystem);
 
     _connectorRepositoryMock
-        .Setup(r => r.ExistsAsync(externalSystemId, "Test Connector", It.IsAny<CancellationToken>()))
+        .Setup(r => r.ExistsAsync(externalSystemId, "Test Connector", It.IsAny<CancellationToken>(), null))
         .ReturnsAsync(false);
 
     Connector? capturedConnector = null;

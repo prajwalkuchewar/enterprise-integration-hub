@@ -32,6 +32,50 @@ namespace EnterpriseIntegrationHub.Domain.Entities
             Status = status;
         }
 
+        public bool UpdateBasicInfo(string name, string description)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Name is required.", nameof(name));
+
+            var changed = Name != name || Description != description;
+            if (!changed)
+                return false;
+
+            Name = name;
+            Description = description;
+            return true;
+        }
+
+        public bool UpdateCommunication(string baseUrl, ConnectorProtocol protocol, ConnectorAuthenticationType authenticationType, int timeoutSeconds)
+        {
+            if (string.IsNullOrWhiteSpace(baseUrl))
+                throw new ArgumentException("BaseUrl is required.", nameof(baseUrl));
+
+            if (timeoutSeconds <= 0)
+                throw new ArgumentException("TimeoutSeconds must be a positive number.", nameof(timeoutSeconds));
+
+            var commChanged = BaseUrl != baseUrl || Protocol != protocol || AuthenticationType != authenticationType || TimeoutSeconds != timeoutSeconds;
+            if (!commChanged)
+                return false;
+
+            BaseUrl = baseUrl;
+            Protocol = protocol;
+            AuthenticationType = authenticationType;
+            TimeoutSeconds = timeoutSeconds;
+
+            if (Status == ConnectorStatus.Active)
+            {
+                Status = ConnectorStatus.Draft;
+            }
+
+            return true;
+        }
+
+        public void MarkUpdated()
+        {
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
         public void Activate()
         {
             if (Status != ConnectorStatus.Draft)
