@@ -31,15 +31,19 @@ public sealed class UpdateConnectorHandler
             throw new InvalidOperationException($"External system with ID {connector.ExternalSystemId} is not active.");
 
         // Ensure name remains unique within the same external system (excluding this connector)
-        var nameConflict = (await _repository.GetAllAsync(cancellationToken))
-            .Any(x => x.ExternalSystemId == connector.ExternalSystemId && x.Name == command.Name && x.Id != connector.Id);
+        var nameConflict = await _repository.ExistsAsync(connector.ExternalSystemId, command.Name, cancellationToken, connector.Id);
 
         if (nameConflict)
             throw new InvalidOperationException($"Connector with name '{command.Name}' and External System '{connector.ExternalSystemId}' already exists.");
 
-        // Apply updates via domain methods
-        connector.UpdateBasicInfo(command.Name, command.Description);
-        connector.UpdateCommunication(command.BaseUrl, command.Protocol, command.AuthenticationType, command.TimeoutSeconds);
+        // Apply updates via domain methods and ensure UpdatedAt is set once per request
+        var basicInfoUpdated = connector.UpdateBasicInfo(command.Name, command.Description);
+        var communicationUpdated = connector.UpdateCommunication(command.BaseUrl, command.Protocol, command.AuthenticationType, command.TimeoutSeconds);
+
+        if (basicInfoUpdated || communicationUpdated)
+        {
+            connector.MarkUpdated();
+        }
 
         await _repository.UpdateAsync(connector, cancellationToken);
     }

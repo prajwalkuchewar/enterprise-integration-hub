@@ -32,21 +32,21 @@ namespace EnterpriseIntegrationHub.Domain.Entities
             Status = status;
         }
 
-        public void UpdateBasicInfo(string name, string description)
+        public bool UpdateBasicInfo(string name, string description)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Name is required.", nameof(name));
 
             var changed = Name != name || Description != description;
             if (!changed)
-                return;
+                return false;
 
             Name = name;
             Description = description;
-            UpdatedAt = DateTimeOffset.UtcNow;
+            return true;
         }
 
-        public void UpdateCommunication(string baseUrl, ConnectorProtocol protocol, ConnectorAuthenticationType authenticationType, int timeoutSeconds)
+        public bool UpdateCommunication(string baseUrl, ConnectorProtocol protocol, ConnectorAuthenticationType authenticationType, int timeoutSeconds)
         {
             if (string.IsNullOrWhiteSpace(baseUrl))
                 throw new ArgumentException("BaseUrl is required.", nameof(baseUrl));
@@ -56,18 +56,24 @@ namespace EnterpriseIntegrationHub.Domain.Entities
 
             var commChanged = BaseUrl != baseUrl || Protocol != protocol || AuthenticationType != authenticationType || TimeoutSeconds != timeoutSeconds;
             if (!commChanged)
-                return;
+                return false;
 
             BaseUrl = baseUrl;
             Protocol = protocol;
             AuthenticationType = authenticationType;
             TimeoutSeconds = timeoutSeconds;
-            UpdatedAt = DateTimeOffset.UtcNow;
 
             if (Status == ConnectorStatus.Active)
             {
                 Status = ConnectorStatus.Draft;
             }
+
+            return true;
+        }
+
+        public void MarkUpdated()
+        {
+            UpdatedAt = DateTimeOffset.UtcNow;
         }
 
         public void Activate()

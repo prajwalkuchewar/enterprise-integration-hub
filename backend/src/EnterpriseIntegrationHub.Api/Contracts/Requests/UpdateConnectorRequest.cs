@@ -13,7 +13,7 @@ public sealed class UpdateConnectorRequest
 
     [Url]
     [MaxLength(200)]
-    public string BaseUrl { get; init; } = string.Empty;
+    public string BaseUrl { get; init; }    = string.Empty;
 
     public ConnectorProtocol Protocol { get; init; }
 
