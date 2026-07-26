@@ -13,6 +13,8 @@ public class EnterpriseIntegrationHubDbContext : DbContext
 
     public DbSet<ExternalSystem> ExternalSystems => Set<ExternalSystem>();
     public DbSet<Connector> Connectors => Set<Connector>();
+    public DbSet<Workflow> Workflows => Set<Workflow>();
+    public DbSet<WorkflowStep> WorkflowSteps => Set<WorkflowStep>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
