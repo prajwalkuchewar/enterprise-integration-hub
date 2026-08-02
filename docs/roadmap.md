@@ -56,3 +56,31 @@ Integration Execution
 ## Sprint 7
 
 Operations & Monitoring
+
+---
+
+## Sprint Completion Checklist
+
+Complete this checklist before closing and releasing each sprint:
+
+- [ ] Feature Complete
+- [ ] Unit Tests
+- [ ] Swagger Tested
+- [ ] PR Review
+- [ ] Documentation
+- [ ] CI Green
+- [ ] Merge
+- [ ] Tag Release
+
+Create a release tag only after the merged change has passed CI. Use the repository's selected versioning convention once one has been adopted.
+
+---
+
+## CI Hardening
+
+- [x] NuGet package caching in `.github/workflows/ci.yml` using `actions/setup-dotnet` with `cache: true`.
+- [x] Formatting verification with `dotnet format --verify-no-changes`.
+- [x] Warning-free release builds with `dotnet build /warnaserror`.
+- [x] Coverage collection with Coverlet, report generation with ReportGenerator, and CI artifact publication.
+- [ ] Configure a coverage badge after selecting its hosting and threshold policy.
+- [ ] Configure GitHub branch protection to require the CI check before merge after the workflow changes have been validated on pull requests.

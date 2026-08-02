@@ -5,13 +5,13 @@ namespace EnterpriseIntegrationHub.Domain.Entities;
 
 public sealed class Workflow : BaseEntity
 {
-    private readonly List<WorkflowStep> _steps = [];
+    // Expose navigation as a mutable collection so EF Core can discover it reliably
+    public ICollection<WorkflowStep> Steps { get; private set; } = new List<WorkflowStep>();
 
     public string Name { get; private set; } = string.Empty;
     public Guid SourceConnectorId { get; private set; }
     public string TriggerEvent { get; private set; } = string.Empty;
     public WorkflowStatus Status { get; private set; }
-    public IReadOnlyCollection<WorkflowStep> Steps => _steps.AsReadOnly();
 
     private Workflow() { }
 
@@ -36,7 +36,11 @@ public sealed class Workflow : BaseEntity
         SourceConnectorId = sourceConnectorId;
         TriggerEvent = triggerEvent;
         Status = WorkflowStatus.Draft;
-        _steps.AddRange(stepDefinitions.Select(x => new WorkflowStep(Id, x.DestinationConnectorId, x.ExecutionOrder)));
+
+        foreach (var sd in stepDefinitions)
+        {
+            Steps.Add(new WorkflowStep(Id, sd.DestinationConnectorId, sd.ExecutionOrder));
+        }
     }
 
     public bool Update(string name, Guid sourceConnectorId, string triggerEvent, IEnumerable<WorkflowStepDefinition> steps)
@@ -46,15 +50,18 @@ public sealed class Workflow : BaseEntity
 
         var replacement = new Workflow(name, sourceConnectorId, triggerEvent, steps);
         var changed = Name != replacement.Name || SourceConnectorId != replacement.SourceConnectorId || TriggerEvent != replacement.TriggerEvent ||
-            !_steps.OrderBy(x => x.ExecutionOrder).Select(x => (x.DestinationConnectorId, x.ExecutionOrder))
+            !Steps.OrderBy(x => x.ExecutionOrder).Select(x => (x.DestinationConnectorId, x.ExecutionOrder))
                 .SequenceEqual(replacement.Steps.OrderBy(x => x.ExecutionOrder).Select(x => (x.DestinationConnectorId, x.ExecutionOrder)));
         if (!changed) return false;
 
         Name = replacement.Name;
         SourceConnectorId = replacement.SourceConnectorId;
         TriggerEvent = replacement.TriggerEvent;
-        _steps.Clear();
-        _steps.AddRange(replacement.Steps.Select(x => new WorkflowStep(Id, x.DestinationConnectorId, x.ExecutionOrder)));
+        Steps.Clear();
+        foreach (var step in replacement.Steps)
+        {
+            Steps.Add(new WorkflowStep(Id, step.DestinationConnectorId, step.ExecutionOrder));
+        }
         UpdatedAt = DateTimeOffset.UtcNow;
         return true;
     }

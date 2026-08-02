@@ -14,9 +14,9 @@ public sealed class ViewConnectorDetailsHandler
 
     public async Task<ConnectorSummary> Handle(ViewConnectorDetailsQuery query, CancellationToken cancellationToken)
     {
-        var item = await _repository.GetByIdAsync(query.Id,cancellationToken);
+        var item = await _repository.GetByIdAsync(query.Id, cancellationToken);
 
-        if(item is null)
+        if (item is null)
         {
             throw new KeyNotFoundException($"Connector with ID {query.Id} not found.");
         }

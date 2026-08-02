@@ -34,7 +34,7 @@ public sealed class CreateConnectorHandler
                 $"External system with ID {command.ExternalSystemId} not found.");
         }
 
-        if(externalSystem.Status != ExternalSystemStatus.Active)
+        if (externalSystem.Status != ExternalSystemStatus.Active)
         {
             throw new InvalidOperationException(
                 $"External system with ID {command.ExternalSystemId} is not active.");

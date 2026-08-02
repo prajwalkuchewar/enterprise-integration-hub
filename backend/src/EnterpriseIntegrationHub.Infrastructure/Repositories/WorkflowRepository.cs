@@ -20,4 +20,11 @@ public sealed class WorkflowRepository(EnterpriseIntegrationHubDbContext context
         context.Workflows.Include(x => x.Steps).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public Task UpdateAsync(Workflow workflow, CancellationToken cancellationToken) => context.SaveChangesAsync(cancellationToken);
+
+    public async Task<IReadOnlyCollection<Workflow>> GetAllAsync(CancellationToken cancellationToken) =>
+        await context.Workflows
+            .AsNoTracking()
+            .Include(x => x.Steps)
+            .OrderBy(x => x.Name)
+            .ToListAsync(cancellationToken);
 }

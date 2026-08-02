@@ -9,7 +9,7 @@ public sealed record ConnectorsResponseModel(
 
 public sealed record ConnectorSummary(
     Guid Id,
-    string Name, 
+    string Name,
     string Description,
     Guid ExternalSystemId,
     string BaseUrl,
