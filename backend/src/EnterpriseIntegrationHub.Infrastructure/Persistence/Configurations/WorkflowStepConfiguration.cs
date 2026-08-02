@@ -11,7 +11,17 @@ public sealed class WorkflowStepConfiguration : IEntityTypeConfiguration<Workflo
         builder.ToTable("WorkflowSteps");
         builder.HasKey(x => new { x.WorkflowId, x.ExecutionOrder });
         builder.Property(x => x.ExecutionOrder).IsRequired();
-        builder.HasOne<Connector>().WithMany().HasForeignKey(x => x.DestinationConnectorId).OnDelete(DeleteBehavior.Restrict);
+        // Relationship to parent Workflow (navigation property 'Steps' on Workflow)
+        builder.HasOne<Workflow>()
+               .WithMany(w => w.Steps)
+               .HasForeignKey(x => x.WorkflowId)
+               .OnDelete(DeleteBehavior.Cascade);
+
+        // Relationship to destination connector
+        builder.HasOne<Connector>()
+               .WithMany()
+               .HasForeignKey(x => x.DestinationConnectorId)
+               .OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(x => x.DestinationConnectorId);
     }
 }
