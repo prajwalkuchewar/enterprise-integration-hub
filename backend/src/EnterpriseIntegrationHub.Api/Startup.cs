@@ -7,6 +7,7 @@ using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Browse;
 using EnterpriseIntegrationHub.Application.Features.Connectors.ViewDetails;
 using EnterpriseIntegrationHub.Application.Features.ExternalSystems.ViewDetails;
 using EnterpriseIntegrationHub.Application.Features.Workflows.Create;
+using EnterpriseIntegrationHub.Application.Features.Workflows.Browse;
 
 using EnterpriseIntegrationHub.Application.Interfaces;
 using EnterpriseIntegrationHub.Infrastructure.Persistence;
@@ -49,6 +50,7 @@ namespace EnterpriseIntegrationHub.Api
             services.AddScoped<ActivateConnectorHandler>();
             services.AddScoped<IConnectorRepository, ConnectorRepository>();
             services.AddScoped<CreateWorkflowHandler>();
+            services.AddScoped<BrowseWorkflowsHandler>();
             services.AddScoped<IWorkflowRepository, WorkflowRepository>();
 
             // Cross-origin requests (adjust origins as needed)
