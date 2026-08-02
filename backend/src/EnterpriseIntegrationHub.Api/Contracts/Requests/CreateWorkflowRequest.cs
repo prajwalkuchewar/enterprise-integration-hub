@@ -15,11 +15,3 @@ public sealed class CreateWorkflowRequest
     [Required, MaxLength(200)]
     public string TriggerEvent { get; init; } = string.Empty;
 }
-
-public sealed class CreateWorkflowStepRequest
-{
-    public Guid DestinationConnectorId { get; init; }
-
-    [Range(1, int.MaxValue)]
-    public int ExecutionOrder { get; init; }
-}
