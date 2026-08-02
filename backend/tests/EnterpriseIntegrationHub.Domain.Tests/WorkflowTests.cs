@@ -1,6 +1,9 @@
+using System;
+using System.Linq;
 using EnterpriseIntegrationHub.Domain.Entities;
 using EnterpriseIntegrationHub.Domain.Enums;
 using FluentAssertions;
+using Xunit;
 
 namespace EnterpriseIntegrationHub.Domain.Tests;
 
