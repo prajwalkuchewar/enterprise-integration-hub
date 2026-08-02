@@ -15,4 +15,10 @@ public sealed class WorkflowRepository(EnterpriseIntegrationHubDbContext context
         context.Workflows.Add(workflow);
         await context.SaveChangesAsync(cancellationToken);
     }
+
+    public Task<Workflow?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
+        context.Workflows
+            .AsNoTracking()
+            .Include(x => x.Steps)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 }
