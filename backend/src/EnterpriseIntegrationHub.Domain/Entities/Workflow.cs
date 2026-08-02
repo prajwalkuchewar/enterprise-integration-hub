@@ -38,4 +38,13 @@ public sealed class Workflow : BaseEntity
         Status = WorkflowStatus.Draft;
         _steps.AddRange(stepDefinitions.Select(x => new WorkflowStep(Id, x.DestinationConnectorId, x.ExecutionOrder)));
     }
+
+    public void Activate()
+    {
+        if (Status != WorkflowStatus.Draft)
+            throw new InvalidOperationException($"Workflow with ID {Id} must be in Draft status to activate.");
+
+        Status = WorkflowStatus.Active;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }
