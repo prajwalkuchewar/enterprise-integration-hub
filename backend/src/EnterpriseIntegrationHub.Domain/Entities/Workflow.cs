@@ -5,13 +5,13 @@ namespace EnterpriseIntegrationHub.Domain.Entities;
 
 public sealed class Workflow : BaseEntity
 {
-    private readonly List<WorkflowStep> _steps = [];
+    // Expose navigation as a mutable collection so EF Core can discover it reliably
+    public ICollection<WorkflowStep> Steps { get; private set; } = new List<WorkflowStep>();
 
     public string Name { get; private set; } = string.Empty;
     public Guid SourceConnectorId { get; private set; }
     public string TriggerEvent { get; private set; } = string.Empty;
     public WorkflowStatus Status { get; private set; }
-    public IReadOnlyCollection<WorkflowStep> Steps => _steps.AsReadOnly();
 
     private Workflow() { }
 
@@ -36,6 +36,10 @@ public sealed class Workflow : BaseEntity
         SourceConnectorId = sourceConnectorId;
         TriggerEvent = triggerEvent;
         Status = WorkflowStatus.Draft;
-        _steps.AddRange(stepDefinitions.Select(x => new WorkflowStep(Id, x.DestinationConnectorId, x.ExecutionOrder)));
+
+        foreach (var sd in stepDefinitions)
+        {
+            Steps.Add(new WorkflowStep(Id, sd.DestinationConnectorId, sd.ExecutionOrder));
+        }
     }
 }
