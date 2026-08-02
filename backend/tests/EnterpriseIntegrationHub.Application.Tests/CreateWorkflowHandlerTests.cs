@@ -28,7 +28,7 @@ public class CreateWorkflowHandlerTests
         var destinationId = Guid.NewGuid();
         SetupActive(sourceId);
         SetupActive(destinationId);
-        _workflows.Setup(x => x.ExistsByNameAsync("Order routing", It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _workflows.Setup(x => x.ExistsByNameAsync("Order routing", It.IsAny<CancellationToken>(), null)).ReturnsAsync(false);
         Workflow? persisted = null;
         _workflows.Setup(x => x.AddAsync(It.IsAny<Workflow>(), It.IsAny<CancellationToken>()))
             .Callback<Workflow, CancellationToken>((workflow, _) => persisted = workflow)
@@ -45,7 +45,7 @@ public class CreateWorkflowHandlerTests
     public async Task Handle_WhenSourceDoesNotExist_ThrowsNotFound()
     {
         var sourceId = Guid.NewGuid();
-        _workflows.Setup(x => x.ExistsByNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _workflows.Setup(x => x.ExistsByNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>(), null)).ReturnsAsync(false);
         _connectors.Setup(x => x.GetByIdAsync(sourceId, It.IsAny<CancellationToken>())).ReturnsAsync((Connector?)null);
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() => _handler.Handle(new("Order routing", sourceId, [new(Guid.NewGuid(), 1)], "OrderCreated"), CancellationToken.None));
@@ -57,7 +57,7 @@ public class CreateWorkflowHandlerTests
         var sourceId = Guid.NewGuid();
         var destinationId = Guid.NewGuid();
         SetupActive(sourceId);
-        _workflows.Setup(x => x.ExistsByNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _workflows.Setup(x => x.ExistsByNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>(), null)).ReturnsAsync(false);
         _connectors.Setup(x => x.GetByIdAsync(destinationId, It.IsAny<CancellationToken>())).ReturnsAsync(CreateConnector(ConnectorStatus.Draft));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => _handler.Handle(new("Order routing", sourceId, [new(destinationId, 1)], "OrderCreated"), CancellationToken.None));
@@ -66,7 +66,7 @@ public class CreateWorkflowHandlerTests
     [Fact]
     public async Task Handle_WhenNameAlreadyExists_ThrowsConflict()
     {
-        _workflows.Setup(x => x.ExistsByNameAsync("Order routing", It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _workflows.Setup(x => x.ExistsByNameAsync("Order routing", It.IsAny<CancellationToken>(), null)).ReturnsAsync(true);
         await Assert.ThrowsAsync<InvalidOperationException>(() => _handler.Handle(new("Order routing", Guid.NewGuid(), [new(Guid.NewGuid(), 1)], "OrderCreated"), CancellationToken.None));
     }
 
