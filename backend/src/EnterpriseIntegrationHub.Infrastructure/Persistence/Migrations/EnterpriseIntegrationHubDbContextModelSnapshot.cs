@@ -109,6 +109,43 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
 
                     b.ToTable("ExternalSystems", (string)null);
                 });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.Workflow", b =>
+                {
+                    b.Property<Guid>("Id").HasColumnType("uniqueidentifier");
+                    b.Property<DateTimeOffset>("CreatedAt").HasColumnType("datetimeoffset");
+                    b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)").UseCollation("SQL_Latin1_General_CP1_CI_AS");
+                    b.Property<Guid>("SourceConnectorId").HasColumnType("uniqueidentifier");
+                    b.Property<int>("Status").HasColumnType("int");
+                    b.Property<string>("TriggerEvent").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
+                    b.Property<DateTimeOffset?>("UpdatedAt").HasColumnType("datetimeoffset");
+                    b.HasKey("Id");
+                    b.HasIndex("Name").IsUnique().HasDatabaseName("IX_Workflows_Name");
+                    b.HasIndex("SourceConnectorId");
+                    b.ToTable("Workflows", (string)null);
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.WorkflowStep", b =>
+                {
+                    b.Property<Guid>("WorkflowId").HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("DestinationConnectorId").HasColumnType("uniqueidentifier");
+                    b.Property<int>("ExecutionOrder").HasColumnType("int");
+                    b.HasKey("WorkflowId", "ExecutionOrder");
+                    b.HasIndex("DestinationConnectorId");
+                    b.ToTable("WorkflowSteps", (string)null);
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.Workflow", b =>
+                {
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.Connector", null).WithMany().HasForeignKey("SourceConnectorId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                    b.Navigation("Steps");
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.WorkflowStep", b =>
+                {
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.Connector", null).WithMany().HasForeignKey("DestinationConnectorId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.Workflow", null).WithMany("Steps").HasForeignKey("WorkflowId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                });
 #pragma warning restore 612, 618
         }
     }

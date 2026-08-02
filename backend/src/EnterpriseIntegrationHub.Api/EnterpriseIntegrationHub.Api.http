@@ -1,5 +1,16 @@
 @EnterpriseIntegrationHub.Api_HostAddress = http://localhost:5194
 
+### Create workflow
+POST {{EnterpriseIntegrationHub.Api_HostAddress}}/api/workflows
+Content-Type: application/json
+
+{
+  "name": "Order created routing",
+  "sourceConnectorId": "00000000-0000-0000-0000-000000000001",
+  "steps": [{ "destinationConnectorId": "00000000-0000-0000-0000-000000000002", "executionOrder": 1 }],
+  "triggerEvent": "OrderCreated"
+}
+
 GET {{EnterpriseIntegrationHub.Api_HostAddress}}/weatherforecast/
 Accept: application/json
 
