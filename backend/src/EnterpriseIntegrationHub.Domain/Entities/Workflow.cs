@@ -38,4 +38,24 @@ public sealed class Workflow : BaseEntity
         Status = WorkflowStatus.Draft;
         _steps.AddRange(stepDefinitions.Select(x => new WorkflowStep(Id, x.DestinationConnectorId, x.ExecutionOrder)));
     }
+
+    public bool Update(string name, Guid sourceConnectorId, string triggerEvent, IEnumerable<WorkflowStepDefinition> steps)
+    {
+        if (Status != WorkflowStatus.Draft)
+            throw new InvalidOperationException("Only draft workflows can be updated.");
+
+        var replacement = new Workflow(name, sourceConnectorId, triggerEvent, steps);
+        var changed = Name != replacement.Name || SourceConnectorId != replacement.SourceConnectorId || TriggerEvent != replacement.TriggerEvent ||
+            !_steps.OrderBy(x => x.ExecutionOrder).Select(x => (x.DestinationConnectorId, x.ExecutionOrder))
+                .SequenceEqual(replacement.Steps.OrderBy(x => x.ExecutionOrder).Select(x => (x.DestinationConnectorId, x.ExecutionOrder)));
+        if (!changed) return false;
+
+        Name = replacement.Name;
+        SourceConnectorId = replacement.SourceConnectorId;
+        TriggerEvent = replacement.TriggerEvent;
+        _steps.Clear();
+        _steps.AddRange(replacement.Steps.Select(x => new WorkflowStep(Id, x.DestinationConnectorId, x.ExecutionOrder)));
+        UpdatedAt = DateTimeOffset.UtcNow;
+        return true;
+    }
 }
