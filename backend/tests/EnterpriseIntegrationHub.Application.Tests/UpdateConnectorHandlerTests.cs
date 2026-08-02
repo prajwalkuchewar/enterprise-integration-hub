@@ -84,7 +84,6 @@ public class UpdateConnectorHandlerTests
         var external = new ExternalSystem("ES", "D", ExternalSystemEnvironment.Development, ExternalSystemStatus.Active);
         var connector = new Connector("Old", "D", external.Id, "https://old", ConnectorProtocol.REST, ConnectorAuthenticationType.APIKey, 10, ConnectorStatus.Active);
 
-        var other = new Connector("Conflicting", "D2", external.Id, "https://x", ConnectorProtocol.REST, ConnectorAuthenticationType.APIKey, 10, ConnectorStatus.Draft);
 
         _connectorRepositoryMock
           .Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
