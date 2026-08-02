@@ -14,9 +14,9 @@ public sealed class ViewExternalSystemDetailsHandler
 
     public async Task<ExternalSystemSummary> Handle(ViewExternalSystemDetailsQuery query, CancellationToken cancellationToken)
     {
-        var item = await _repository.GetByIdAsync(query.Id,cancellationToken);
+        var item = await _repository.GetByIdAsync(query.Id, cancellationToken);
 
-        if(item is null)
+        if (item is null)
         {
             throw new KeyNotFoundException($"External system with ID {query.Id} not found.");
         }

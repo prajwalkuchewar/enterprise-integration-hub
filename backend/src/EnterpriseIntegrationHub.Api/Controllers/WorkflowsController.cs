@@ -1,15 +1,20 @@
 using EnterpriseIntegrationHub.Api.Contracts.Requests;
+using EnterpriseIntegrationHub.Application.Contracts.Responses;
+using EnterpriseIntegrationHub.Application.Features.Workflows.Browse;
 using EnterpriseIntegrationHub.Application.Features.Workflows.Create;
 using EnterpriseIntegrationHub.Application.Features.Workflows.ViewDetails;
-using EnterpriseIntegrationHub.Application.Contracts.Responses;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnterpriseIntegrationHub.Api.Controllers;
 
+/// <summary>Provides endpoints for creating, browsing, and viewing workflows.</summary>
 [ApiController]
 [Route("api/workflows")]
 [Produces("application/json")]
-public sealed class WorkflowsController(CreateWorkflowHandler createHandler, ViewWorkflowDetailsHandler viewDetailsHandler) : ControllerBase
+public sealed class WorkflowsController(
+    CreateWorkflowHandler createHandler,
+    BrowseWorkflowsHandler browseHandler,
+    ViewWorkflowDetailsHandler viewDetailsHandler) : ControllerBase
 {
     /// <summary>Creates a draft workflow that routes a trigger event from one connector to one or more destinations.</summary>
     [HttpPost]
@@ -30,6 +35,12 @@ public sealed class WorkflowsController(CreateWorkflowHandler createHandler, Vie
         catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
         catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
     }
+
+    /// <summary>Browses workflows in name order.</summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(WorkflowsResponseModel), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Browse(CancellationToken cancellationToken) =>
+        Ok(await browseHandler.Handle(new BrowseWorkflowsQuery(), cancellationToken));
 
     /// <summary>Views a workflow and its ordered steps.</summary>
     [HttpGet("{id:guid}")]
