@@ -30,6 +30,11 @@ public sealed class ActivateConnectorHandler
       throw new KeyNotFoundException($"Connector with ID {command.ConnectorId} not found.");
     }
 
+    if (connector.Status != ConnectorStatus.Draft)
+    {
+      throw new InvalidOperationException($"Connector with ID {connector.Id} must be in Draft status to activate.");
+    }
+
     var externalSystem = await _externalSystemRepository.GetByIdAsync(connector.ExternalSystemId, cancellationToken);
 
     if (externalSystem is null)

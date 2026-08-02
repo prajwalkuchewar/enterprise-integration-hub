@@ -15,18 +15,6 @@ public sealed class ConnectorRepository : IConnectorRepository
         _context = context;
     }
 
-    public async Task<bool> ExistsAsync(
-        Guid externalSystemId,
-        string name,
-        CancellationToken cancellationToken)
-    {
-        return await _context.Connectors
-            .AnyAsync(x =>
-                x.ExternalSystemId == externalSystemId &&
-                x.Name == name,
-                cancellationToken);
-    }
-
     public async Task AddAsync(
         Connector connector,
         CancellationToken cancellationToken)
@@ -56,5 +44,15 @@ public sealed class ConnectorRepository : IConnectorRepository
     {
         _context.Connectors.Update(connector);
         await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<bool> ExistsAsync(Guid externalSystemId, string name, CancellationToken cancellationToken, Guid? excludedConnectorId = null)
+    {
+        return await _context.Connectors
+            .AnyAsync(x =>
+                x.ExternalSystemId == externalSystemId &&
+                x.Name == name &&
+                (excludedConnectorId == null || x.Id != excludedConnectorId.Value),
+                cancellationToken);
     }
 }

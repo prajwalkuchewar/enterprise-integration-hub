@@ -43,7 +43,8 @@ public sealed class CreateConnectorHandler
         var exists = await _repository.ExistsAsync(
             command.ExternalSystemId,
             command.Name,
-            cancellationToken);
+            cancellationToken,
+            excludedConnectorId: null);
 
         if (exists)
         {

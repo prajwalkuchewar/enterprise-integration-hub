@@ -5,6 +5,7 @@ using EnterpriseIntegrationHub.Application.Features.Connectors.Create;
 using EnterpriseIntegrationHub.Application.Features.Connectors.ViewDetails;
 using EnterpriseIntegrationHub.Application.Contracts.Responses;
 using Microsoft.AspNetCore.Mvc;
+using EnterpriseIntegrationHub.Application.Features.Connectors.Update;
 
 namespace EnterpriseIntegrationHub.Api.Controllers;
 
@@ -17,6 +18,7 @@ namespace EnterpriseIntegrationHub.Api.Controllers;
 public sealed class ConnectorsController : ControllerBase
 {
     private readonly CreateConnectorHandler _createHandler;
+    private readonly UpdateConnectorHandler _updateHandler;
     private readonly BrowseConnectorsHandler _browseHandler;
     private readonly ViewConnectorDetailsHandler _viewDetailsHandler;
     private readonly ActivateConnectorHandler _activateHandler;
@@ -26,11 +28,13 @@ public sealed class ConnectorsController : ControllerBase
     /// </summary>
     public ConnectorsController(
         CreateConnectorHandler createHandler,
+        UpdateConnectorHandler updateHandler,
         BrowseConnectorsHandler browseHandler,
         ViewConnectorDetailsHandler viewDetailsHandler,
         ActivateConnectorHandler activateHandler)
     {
         _createHandler = createHandler;
+        _updateHandler = updateHandler;
         _browseHandler = browseHandler;
         _viewDetailsHandler = viewDetailsHandler;
         _activateHandler = activateHandler;
@@ -76,6 +80,45 @@ public sealed class ConnectorsController : ControllerBase
             return NotFound(new { message = exception.Message });
         }
     }
+
+
+    ///<summary>
+    /// Upate connector deatils
+    /// </summary>
+    /// <param name="id">Connector id.</param>
+    /// <param name="request">Update request payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>204 No Content if updated, or 404 Not Found if not found.</returns>
+    [HttpPut("{id:guid}")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Update([FromRoute] Guid id, UpdateConnectorRequest request, CancellationToken cancellationToken)
+    {
+        var command = new UpdateConnectorCommand(
+            request.Name,
+            request.Description,
+            request.BaseUrl,
+            request.Protocol,
+            request.AuthenticationType,
+            request.TimeoutSeconds);
+
+        try
+        {
+            await _updateHandler.Handle(id, command, cancellationToken);
+            return NoContent();
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(new { message = exception.Message });
+        }
+        catch (KeyNotFoundException exception)
+        {
+            return NotFound(new { message = exception.Message });
+        }
+    }
+
 
     /// <summary>
     /// Browse connectors.
