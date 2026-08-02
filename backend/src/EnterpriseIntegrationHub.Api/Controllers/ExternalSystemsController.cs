@@ -47,7 +47,7 @@ public sealed class ExternalSystemsController : ControllerBase
     {
         var command = new CreateExternalSystemCommand(
             request.Name,
-            request.Description, 
+            request.Description,
             request.Environment);
 
         try
@@ -94,7 +94,7 @@ public sealed class ExternalSystemsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ViewDetails([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-            var query = new ViewExternalSystemDetailsQuery(id);
+        var query = new ViewExternalSystemDetailsQuery(id);
         try
         {
             var response = await _viewDetailsHandler.Handle(query, cancellationToken);
