@@ -36,16 +36,26 @@ The first version of EIH focuses on the administrative capabilities required bef
 
 Current capabilities include:
 
-External System Management
+External System Management (Complete)
 
 - Register enterprise systems
 - Browse registered systems
 - View system details
 
+Connector Management (Complete)
+
+- Configure communication contracts for external systems
+- Browse and view connector details
+- Update and activate connectors
+
+Workflow Management (Complete)
+
+- Create and browse workflows
+- Define sequential integration routing
+- Update and activate draft workflows
+
 Upcoming capabilities include:
 
-- Connector Management
-- Workflow Management
 - Transformation Configuration
 
 Operational monitoring will be introduced in later iterations.

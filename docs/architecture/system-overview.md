@@ -95,4 +95,36 @@ Future Enhancements
 
 Status
 
-🚧 Planned (Sprint 2)
+✅ Complete (Sprint 2)
+
+Implemented Use Cases
+
+- Create Draft Connector
+- Browse Connectors
+- View Connector Details
+- Update Connector
+- Activate Draft Connector
+
+Key Concept
+
+Connectors define the communication contract for an external system. Updating an active connector's communication settings returns it to Draft status so it can be reviewed and activated again.
+
+---
+
+### Workflow Management
+
+Status
+
+✅ Complete (Sprint 3)
+
+Implemented Use Cases
+
+- Create Draft Workflow
+- Browse Workflows
+- View Workflow Details with Steps
+- Update Draft Workflow
+- Activate Draft Workflow
+
+Key Concept
+
+Workflows route a trigger event from one source connector to one or more destination connectors through sequentially ordered steps. A workflow begins in Draft status and can be activated only when all referenced connectors are active.

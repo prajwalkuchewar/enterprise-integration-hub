@@ -40,6 +40,8 @@ Integration Administrator
 - Description is required.
 - Environment is required.
 - Name must be unique within the selected environment.
+- Name must be at most 200 characters.
+- Description must be at most 1000 characters.
 - Newly created systems are Active by default.
 
 ---
