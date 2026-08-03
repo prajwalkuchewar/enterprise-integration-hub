@@ -13,25 +13,28 @@ External System Management
 
 ---
 
-## Sprint 2
+## Sprint 2 ✅
 
 Connector Management
 
-- [ ] Create Connector
-- [ ] Browse Connectors
-- [ ] View Connector Details
-- [ ] Activate Connector
+- [x] Create Connector
+- [x] Browse Connectors
+- [x] View Connector Details
+- [x] Update Connector
+- [x] Activate Connector
 - [ ] Deactivate Connector
 
 ---
 
-## Sprint 3
+## Sprint 3 ✅
 
 Workflow Management
 
-- [ ] Create Workflow
-- [ ] Browse Workflows
-- [ ] View Workflow Details
+- [x] Create Workflow
+- [x] Browse Workflows
+- [x] View Workflow Details
+- [x] Update Workflow
+- [x] Activate Workflow
 
 ---
 
