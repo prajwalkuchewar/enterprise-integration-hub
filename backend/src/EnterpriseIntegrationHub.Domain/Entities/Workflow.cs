@@ -43,6 +43,15 @@ public sealed class Workflow : BaseEntity
         }
     }
 
+    public void Activate()
+    {
+        if (Status != WorkflowStatus.Draft)
+            throw new InvalidOperationException($"Workflow with ID {Id} must be in Draft status to activate.");
+
+        Status = WorkflowStatus.Active;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     public bool Update(string name, Guid sourceConnectorId, string triggerEvent, IEnumerable<WorkflowStepDefinition> steps)
     {
         if (Status != WorkflowStatus.Draft)

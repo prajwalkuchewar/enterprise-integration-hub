@@ -8,6 +8,7 @@ using EnterpriseIntegrationHub.Application.Features.Connectors.ViewDetails;
 using EnterpriseIntegrationHub.Application.Features.ExternalSystems.ViewDetails;
 using EnterpriseIntegrationHub.Application.Features.Workflows.Browse;
 using EnterpriseIntegrationHub.Application.Features.Workflows.Create;
+using EnterpriseIntegrationHub.Application.Features.Workflows.Activate;
 using EnterpriseIntegrationHub.Application.Features.Workflows.Update;
 using EnterpriseIntegrationHub.Application.Features.Workflows.ViewDetails;
 
@@ -53,6 +54,7 @@ namespace EnterpriseIntegrationHub.Api
             services.AddScoped<IConnectorRepository, ConnectorRepository>();
             services.AddScoped<CreateWorkflowHandler>();
             services.AddScoped<BrowseWorkflowsHandler>();
+            services.AddScoped<ActivateWorkflowHandler>();
             services.AddScoped<UpdateWorkflowHandler>();
             services.AddScoped<ViewWorkflowDetailsHandler>();
             services.AddScoped<IWorkflowRepository, WorkflowRepository>();

@@ -17,9 +17,13 @@ public sealed class WorkflowRepository(EnterpriseIntegrationHubDbContext context
     }
 
     public Task<Workflow?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
-        context.Workflows.Include(x => x.Steps).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        context.Workflows.AsNoTracking().Include(x => x.Steps).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-    public Task UpdateAsync(Workflow workflow, CancellationToken cancellationToken) => context.SaveChangesAsync(cancellationToken);
+    public async Task UpdateAsync(Workflow workflow, CancellationToken cancellationToken)
+    {
+        context.Workflows.Update(workflow);
+        await context.SaveChangesAsync(cancellationToken);
+    }
 
     public async Task<IReadOnlyCollection<Workflow>> GetAllAsync(CancellationToken cancellationToken) =>
         await context.Workflows
