@@ -34,7 +34,7 @@ Integration Administrator
 - Name must be unique within its External System.
 - Base URL is required, must be a valid URL, and must be at most 1000 characters.
 - Authentication type must be one of `APIKey`, `OAuth2`, `Basic`, or `BearerToken`.
-- Timeout must be from 1 to 3600 seconds.
+- Timeout must be a positive number of seconds.
 - New connectors start in Draft status.
 - Only Draft connectors can be activated.
 - Updating an Active connector's base URL, protocol, authentication type, or timeout returns it to Draft status.
