@@ -4,8 +4,9 @@ namespace EnterpriseIntegrationHub.Application.Interfaces;
 
 public interface IWorkflowRepository
 {
-    Task<bool> ExistsByNameAsync(string name, CancellationToken cancellationToken);
+    Task<bool> ExistsByNameAsync(string name, CancellationToken cancellationToken, Guid? excludedWorkflowId = null);
     Task AddAsync(Workflow workflow, CancellationToken cancellationToken);
     Task<Workflow?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+    Task UpdateAsync(Workflow workflow, CancellationToken cancellationToken);
     Task<IReadOnlyCollection<Workflow>> GetAllAsync(CancellationToken cancellationToken);
 }

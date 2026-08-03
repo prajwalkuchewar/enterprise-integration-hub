@@ -7,8 +7,8 @@ namespace EnterpriseIntegrationHub.Infrastructure.Repositories;
 
 public sealed class WorkflowRepository(EnterpriseIntegrationHubDbContext context) : IWorkflowRepository
 {
-    public Task<bool> ExistsByNameAsync(string name, CancellationToken cancellationToken) =>
-        context.Workflows.AnyAsync(x => x.Name == name, cancellationToken);
+    public Task<bool> ExistsByNameAsync(string name, CancellationToken cancellationToken, Guid? excludedWorkflowId = null) =>
+        context.Workflows.AnyAsync(x => x.Name == name && (excludedWorkflowId == null || x.Id != excludedWorkflowId), cancellationToken);
 
     public async Task AddAsync(Workflow workflow, CancellationToken cancellationToken)
     {
@@ -17,10 +17,9 @@ public sealed class WorkflowRepository(EnterpriseIntegrationHubDbContext context
     }
 
     public Task<Workflow?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
-        context.Workflows
-            .AsNoTracking()
-            .Include(x => x.Steps)
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        context.Workflows.Include(x => x.Steps).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    public Task UpdateAsync(Workflow workflow, CancellationToken cancellationToken) => context.SaveChangesAsync(cancellationToken);
 
     public async Task<IReadOnlyCollection<Workflow>> GetAllAsync(CancellationToken cancellationToken) =>
         await context.Workflows
