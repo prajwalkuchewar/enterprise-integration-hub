@@ -32,9 +32,7 @@ Integration Administrator
 - A connector belongs to one External System, which must exist and be Active.
 - Name and description are required.
 - Name must be unique within its External System.
-- Name must be at most 200 characters and description at most 1000 characters.
-- Base URL is required, must be a valid URL, and must be at most 200 characters.
-- Protocol must be one of `REST`, `SOAP`, `SFTP`, or `GraphQL`.
+- Base URL is required, must be a valid URL, and must be at most 1000 characters.
 - Authentication type must be one of `APIKey`, `OAuth2`, `Basic`, or `BearerToken`.
 - Timeout must be from 1 to 3600 seconds.
 - New connectors start in Draft status.
