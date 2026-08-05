@@ -1,6 +1,7 @@
 using EnterpriseIntegrationHub.Api.Extensions;
 using EnterpriseIntegrationHub.Application.Features.Connectors.Activate;
 using EnterpriseIntegrationHub.Application.Features.Connectors.Create;
+using EnterpriseIntegrationHub.Application.Features.Connectors.Update;
 using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Create;
 using EnterpriseIntegrationHub.Application.Features.Connectors.Browse;
 using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Browse;
@@ -51,6 +52,7 @@ namespace EnterpriseIntegrationHub.Api
             services.AddScoped<BrowseConnectorsHandler>();
             services.AddScoped<ViewConnectorDetailsHandler>();
             services.AddScoped<ActivateConnectorHandler>();
+            services.AddScoped<UpdateConnectorHandler>();
             services.AddScoped<IConnectorRepository, ConnectorRepository>();
             services.AddScoped<CreateWorkflowHandler>();
             services.AddScoped<BrowseWorkflowsHandler>();
