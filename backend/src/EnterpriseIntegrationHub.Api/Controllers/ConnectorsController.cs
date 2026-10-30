@@ -6,6 +6,7 @@ using EnterpriseIntegrationHub.Application.Features.Connectors.ViewDetails;
 using EnterpriseIntegrationHub.Application.Contracts.Responses;
 using Microsoft.AspNetCore.Mvc;
 using EnterpriseIntegrationHub.Application.Features.Connectors.Update;
+using EnterpriseIntegrationHub.Application.Features.Connectors.Deactivate;
 
 namespace EnterpriseIntegrationHub.Api.Controllers;
 
@@ -22,6 +23,7 @@ public sealed class ConnectorsController : ControllerBase
     private readonly BrowseConnectorsHandler _browseHandler;
     private readonly ViewConnectorDetailsHandler _viewDetailsHandler;
     private readonly ActivateConnectorHandler _activateHandler;
+    private readonly DeactivateConnectorHandler _deactivateHandler;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConnectorsController"/> class.
@@ -31,13 +33,24 @@ public sealed class ConnectorsController : ControllerBase
         UpdateConnectorHandler updateHandler,
         BrowseConnectorsHandler browseHandler,
         ViewConnectorDetailsHandler viewDetailsHandler,
-        ActivateConnectorHandler activateHandler)
+        ActivateConnectorHandler activateHandler,
+        DeactivateConnectorHandler deactivateHandler)
     {
         _createHandler = createHandler;
         _updateHandler = updateHandler;
         _browseHandler = browseHandler;
         _viewDetailsHandler = viewDetailsHandler;
         _activateHandler = activateHandler;
+        _deactivateHandler = deactivateHandler;
+    }
+
+    /// <summary>Deactivates an active connector.</summary>
+    [HttpPost("{id:guid}/deactivate")]
+    public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
+    {
+        try { await _deactivateHandler.Handle(new DeactivateConnectorCommand(id), cancellationToken); return NoContent(); }
+        catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
+        catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
     }
 
     /// <summary>

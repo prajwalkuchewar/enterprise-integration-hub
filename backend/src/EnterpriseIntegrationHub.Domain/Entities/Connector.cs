@@ -86,5 +86,14 @@ namespace EnterpriseIntegrationHub.Domain.Entities
             Status = ConnectorStatus.Active;
             UpdatedAt = DateTimeOffset.UtcNow;
         }
+
+        public void Deactivate()
+        {
+            if (Status != ConnectorStatus.Active)
+                throw new InvalidOperationException($"Connector with ID {Id} must be active to deactivate.");
+
+            Status = ConnectorStatus.Inactive;
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
     }
 }

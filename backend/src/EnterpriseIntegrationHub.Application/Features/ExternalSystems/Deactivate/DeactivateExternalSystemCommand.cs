@@ -1,0 +1,3 @@
+namespace EnterpriseIntegrationHub.Application.Features.ExternalSystems.Deactivate;
+
+public sealed record DeactivateExternalSystemCommand(Guid ExternalSystemId);
