@@ -52,4 +52,10 @@ public sealed class ExternalSystemRepository : IExternalSystemRepository
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task UpdateAsync(ExternalSystem externalSystem, CancellationToken cancellationToken)
+    {
+        _context.ExternalSystems.Update(externalSystem);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
 }

@@ -7,6 +7,10 @@ using EnterpriseIntegrationHub.Application.Features.Connectors.Browse;
 using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Browse;
 using EnterpriseIntegrationHub.Application.Features.Connectors.ViewDetails;
 using EnterpriseIntegrationHub.Application.Features.ExternalSystems.ViewDetails;
+using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Update;
+using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Activate;
+using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Deactivate;
+using EnterpriseIntegrationHub.Application.Features.Connectors.Deactivate;
 using EnterpriseIntegrationHub.Application.Features.Workflows.Browse;
 using EnterpriseIntegrationHub.Application.Features.Workflows.Create;
 using EnterpriseIntegrationHub.Application.Features.Workflows.Activate;
@@ -46,12 +50,16 @@ namespace EnterpriseIntegrationHub.Api
             services.AddScoped<CreateExternalSystemHandler>();
             services.AddScoped<BrowseExternalSystemsHandler>();
             services.AddScoped<ViewExternalSystemDetailsHandler>();
+            services.AddScoped<UpdateExternalSystemHandler>();
+            services.AddScoped<ActivateExternalSystemHandler>();
+            services.AddScoped<DeactivateExternalSystemHandler>();
             services.AddScoped<IExternalSystemRepository, ExternalSystemRepository>();
 
             services.AddScoped<CreateConnectorHandler>();
             services.AddScoped<BrowseConnectorsHandler>();
             services.AddScoped<ViewConnectorDetailsHandler>();
             services.AddScoped<ActivateConnectorHandler>();
+            services.AddScoped<DeactivateConnectorHandler>();
             services.AddScoped<UpdateConnectorHandler>();
             services.AddScoped<IConnectorRepository, ConnectorRepository>();
             services.AddScoped<CreateWorkflowHandler>();

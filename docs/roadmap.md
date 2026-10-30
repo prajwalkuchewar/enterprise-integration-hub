@@ -7,9 +7,9 @@ External System Management
 - [x] Create External System
 - [x] Browse External Systems
 - [x] View External System Details
-- [ ] Update External System
-- [ ] Activate External System
-- [ ] Deactivate External System
+- [x] Update External System
+- [x] Activate External System
+- [x] Deactivate External System
 
 ---
 
@@ -22,7 +22,7 @@ Connector Management
 - [x] View Connector Details
 - [x] Update Connector
 - [x] Activate Connector
-- [ ] Deactivate Connector
+- [x] Deactivate Connector
 
 ---
 
@@ -35,6 +35,18 @@ Workflow Management
 - [x] View Workflow Details
 - [x] Update Workflow
 - [x] Activate Workflow
+
+## Backend handoff ✅
+
+- [x] REST lifecycle APIs for external systems and connectors
+- [x] Persistence-backed repositories and EF Core migrations
+- [x] CORS configured for frontend development
+- [x] Swagger/OpenAPI available in Development
+- [x] Domain, application, and infrastructure test suites passing
+
+The next workstream is the frontend consuming the existing `/api/external-systems`,
+`/api/connectors`, and `/api/workflows` resources. Execution, transformation,
+monitoring, authentication, and audit history remain post-MVP backend slices.
 
 ---
 

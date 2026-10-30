@@ -2,6 +2,9 @@ using EnterpriseIntegrationHub.Api.Contracts.Requests;
 using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Browse;
 using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Create;
 using EnterpriseIntegrationHub.Application.Features.ExternalSystems.ViewDetails;
+using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Update;
+using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Activate;
+using EnterpriseIntegrationHub.Application.Features.ExternalSystems.Deactivate;
 using EnterpriseIntegrationHub.Application.Contracts.Responses;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,6 +21,9 @@ public sealed class ExternalSystemsController : ControllerBase
     private readonly CreateExternalSystemHandler _createHandler;
     private readonly BrowseExternalSystemsHandler _browseHandler;
     private readonly ViewExternalSystemDetailsHandler _viewDetailsHandler;
+    private readonly UpdateExternalSystemHandler _updateHandler;
+    private readonly ActivateExternalSystemHandler _activateHandler;
+    private readonly DeactivateExternalSystemHandler _deactivateHandler;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ExternalSystemsController"/> class.
@@ -25,11 +31,49 @@ public sealed class ExternalSystemsController : ControllerBase
     public ExternalSystemsController(
         CreateExternalSystemHandler createHandler,
         BrowseExternalSystemsHandler browseHandler,
-        ViewExternalSystemDetailsHandler viewDetailsHandler)
+        ViewExternalSystemDetailsHandler viewDetailsHandler,
+        UpdateExternalSystemHandler updateHandler,
+        ActivateExternalSystemHandler activateHandler,
+        DeactivateExternalSystemHandler deactivateHandler)
     {
         _createHandler = createHandler;
         _browseHandler = browseHandler;
         _viewDetailsHandler = viewDetailsHandler;
+        _updateHandler = updateHandler;
+        _activateHandler = activateHandler;
+        _deactivateHandler = deactivateHandler;
+    }
+
+    /// <summary>Updates an external system.</summary>
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, UpdateExternalSystemRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _updateHandler.Handle(id, new UpdateExternalSystemCommand(request.Name, request.Description, request.Environment), cancellationToken);
+            return NoContent();
+        }
+        catch (ArgumentException exception) { return BadRequest(new { message = exception.Message }); }
+        catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
+        catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
+    }
+
+    /// <summary>Activates an inactive external system.</summary>
+    [HttpPost("{id:guid}/activate")]
+    public async Task<IActionResult> Activate(Guid id, CancellationToken cancellationToken)
+    {
+        try { await _activateHandler.Handle(new ActivateExternalSystemCommand(id), cancellationToken); return NoContent(); }
+        catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
+        catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
+    }
+
+    /// <summary>Deactivates an active external system.</summary>
+    [HttpPost("{id:guid}/deactivate")]
+    public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
+    {
+        try { await _deactivateHandler.Handle(new DeactivateExternalSystemCommand(id), cancellationToken); return NoContent(); }
+        catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
+        catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
     }
 
     /// <summary>

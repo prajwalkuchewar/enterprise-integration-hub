@@ -13,5 +13,7 @@ namespace EnterpriseIntegrationHub.Application.Interfaces
 
         Task<ExternalSystem?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
+        Task UpdateAsync(ExternalSystem externalSystem, CancellationToken cancellationToken);
+
     }
 }
