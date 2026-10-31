@@ -18,7 +18,7 @@
 3. [ ] Decide equivalent external-system dependency behavior.
 4. [ ] Add centralized exception handling with a stable ProblemDetails contract.
 5. [x] Add SQL Server relational integration tests for migrations, unique indexes, and foreign keys.
-6. [ ] Add API-host lifecycle tests.
+6. [x] Add API-host lifecycle tests with WebApplicationFactory.
 7. [ ] Add optimistic concurrency and map conflicts to 409.
 8. [ ] Define immutable workflow publication/versioning.
 
