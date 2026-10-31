@@ -190,7 +190,9 @@ td:first-child { padding-left: 5px; }
 .alert > button:not(.alert-close) { border: 0; color: #9d514b; background: transparent; cursor: pointer; font-size: 9px; font-weight: 700; }
 .alert-close { border: 0; color: #a66c68; background: transparent; cursor: pointer; font-size: 17px; }
 
-.modal-backdrop { position: fixed; inset: 0; z-index: 10; display: grid; overflow-y: auto; place-items: center; padding: 24px; background: rgba(12, 23, 39, .48); backdrop-filter: blur(3px); animation: fade-in .14s ease-out; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 10; display: grid; overflow-y: auto; place-items: center; width: auto; max-width: none; max-height: none; margin: 0; padding: 24px; border: 0; color: inherit; background: transparent; animation: fade-in .14s ease-out; }
+.modal-backdrop:not([open]) { display: none; }
+.modal-backdrop::backdrop { background: rgba(12, 23, 39, .48); backdrop-filter: blur(3px); }
 .modal-card { width: min(100%, 495px); max-height: min(90vh, 800px); overflow-y: auto; padding: 23px 25px 22px; border: 1px solid rgba(255,255,255,.65); border-radius: 10px; background: #fff; box-shadow: 0 22px 65px rgba(7, 20, 42, .24); animation: modal-in .18s ease-out; }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modal-in { from { opacity: .7; transform: translateY(8px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }

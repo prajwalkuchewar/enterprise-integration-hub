@@ -14,11 +14,12 @@ docs/          Product, architecture, and feature notes
 ## Start the application locally
 
 1. Start SQL Server from the repository root with `docker compose -f infrastructure/docker-compose.yml up -d eih-sqlserver`.
-2. Start the API with `dotnet run --project backend/src/EnterpriseIntegrationHub.Api --launch-profile http`.
-3. Install the JavaScript workspace dependencies once with `npm install`.
-4. Start Angular from the repository root with `npm run start` and open `http://localhost:4200`.
+2. Apply the backend database migrations with `dotnet ef database update --project backend/src/EnterpriseIntegrationHub.Infrastructure --startup-project backend/src/EnterpriseIntegrationHub.Api`.
+3. Start the API with `dotnet run --project backend/src/EnterpriseIntegrationHub.Api --launch-profile http`.
+4. Install the JavaScript workspace dependencies once with `npm install`.
+5. Start Angular from the repository root with `npm run start` and open `http://localhost:4200`.
 
-The Angular development server proxies `/api` requests to `http://localhost:5194`. Swagger is available from the API at `http://localhost:5194/swagger` while running in Development.
+The Angular development server proxies `/api` requests to `http://localhost:5194`. Swagger is available from the API at `http://localhost:5194/swagger` while running in Development. Install the `dotnet-ef` tool if the `dotnet ef` command is not available.
 
 To create a production frontend bundle, run `npm run build`. The output is written under `frontend/dist/`.
 
