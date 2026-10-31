@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using EnterpriseIntegrationHub.Api.Validation;
 using EnterpriseIntegrationHub.Domain.Enums;
 
 namespace EnterpriseIntegrationHub.Api.Contracts.Requests;
@@ -7,31 +8,30 @@ namespace EnterpriseIntegrationHub.Api.Contracts.Requests;
 public sealed class CreateConnectorRequest
 {
     /// <summary>Gets the connector name.</summary>
-    [Required]
+    [NotWhiteSpace]
     [MaxLength(200)]
     public string Name { get; init; } = string.Empty;
 
     /// <summary>Gets the connector description.</summary>
-    [Required]
+    [NotWhiteSpace]
     [MaxLength(1000)]
     public string Description { get; init; } = string.Empty;
 
     /// <summary>Gets the identifier of the external system that owns the connector.</summary>
-    [Required]
+    [NotEmptyGuid]
     public Guid ExternalSystemId { get; init; }
 
     /// <summary>Gets the connector base URL.</summary>
-    [Required]
-    [Url]
-    [MaxLength(200)]
+    [HttpUrl]
+    [MaxLength(1000)]
     public string BaseUrl { get; init; } = string.Empty;
 
     /// <summary>Gets the connector protocol.</summary>
-    [Required]
+    [DefinedEnum(typeof(ConnectorProtocol))]
     public ConnectorProtocol Protocol { get; init; }
 
     /// <summary>Gets the connector authentication type.</summary>
-    [Required]
+    [DefinedEnum(typeof(ConnectorAuthenticationType))]
     public ConnectorAuthenticationType AuthenticationType { get; init; }
 
     /// <summary>Gets the request timeout in seconds.</summary>

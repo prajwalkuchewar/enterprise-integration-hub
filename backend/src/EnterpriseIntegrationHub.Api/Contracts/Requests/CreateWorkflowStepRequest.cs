@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using EnterpriseIntegrationHub.Api.Validation;
 
 namespace EnterpriseIntegrationHub.Api.Contracts.Requests;
 
@@ -8,6 +9,7 @@ namespace EnterpriseIntegrationHub.Api.Contracts.Requests;
 public sealed class CreateWorkflowStepRequest
 {
     /// <summary>The connector that receives this step's routed event.</summary>
+    [NotEmptyGuid]
     public Guid DestinationConnectorId { get; init; }
 
     /// <summary>The one-based position of this step within the workflow.</summary>
