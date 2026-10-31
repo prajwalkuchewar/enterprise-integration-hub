@@ -150,6 +150,6 @@ Durable immutable history makes event handling auditable, makes retry behavior e
 
 Status
 
-Proposed; pending owner/mentor agreement. Implementation is pending.
+Accepted in PR #65; implementation is pending.
 
 ---

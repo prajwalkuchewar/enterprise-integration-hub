@@ -1,6 +1,6 @@
 # Runtime Execution Domain Decisions
 
-**Status:** Proposed decision baseline for issue [#49](https://github.com/prajwalkuchewar/enterprise-integration-hub/issues/49), pending owner/mentor agreement. No runtime execution model is implemented by this document.
+**Status:** Accepted design baseline for completed issue [#49](https://github.com/prajwalkuchewar/enterprise-integration-hub/issues/49), merged in PR #65. Runtime execution models are still pending.
 
 ## Purpose and boundary
 
@@ -76,8 +76,8 @@ Cancellation is cooperative. It prevents new work and cancels an in-flight reque
 
 ## Implementation sequence and acceptance boundary
 
-1. Agree on this contract in issue #49 before domain code is added.
-2. Correct issue #51 to depend on #49 and make its resolver return an active immutable workflow revision.
+1. [x] Agree on this contract in issue #49 before domain code is added.
+2. Implement #51 before #50: resolve only active workflows by source connector and case-insensitive trigger event; require active source and destination connectors; return no-match and ambiguity as explicit outcomes.
 3. Implement workflow revision persistence and execution/step/attempt models, then create execution and dispatch atomically in issue #50.
 4. Keep transport ingestion, destination invocation, durable retry scheduling, operator replay, and monitoring in their later vertical slices.
 
