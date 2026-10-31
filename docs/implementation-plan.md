@@ -17,9 +17,12 @@
 2. [ ] Block connector deactivation when an active workflow references it; return a clear conflict.
 3. [ ] Decide equivalent external-system dependency behavior.
 4. [ ] Add centralized exception handling with a stable ProblemDetails contract.
-5. [ ] Add API-host lifecycle tests and SQL Server relational integration tests.
-6. [ ] Add optimistic concurrency and map conflicts to 409.
-7. [ ] Define immutable workflow publication/versioning.
+5. [x] Add SQL Server relational integration tests for migrations, unique indexes, and foreign keys.
+6. [x] Add API-host lifecycle tests with WebApplicationFactory.
+7. [ ] Add optimistic concurrency and map conflicts to 409.
+8. [ ] Define immutable workflow publication/versioning.
+
+The SQL Server tests use Testcontainers by default. Set `EIH_SQLSERVER_TEST_CONNECTION` to use an existing SQL Server instance instead; Docker is required when no connection string is configured.
 
 **Exit:** configuration is safe and versioned enough to become runtime input.
 
