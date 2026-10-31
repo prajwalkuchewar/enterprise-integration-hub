@@ -27,7 +27,7 @@ The SQL Server tests use Testcontainers by default. Set `EIH_SQLSERVER_TEST_CONN
 
 ## Milestone 2 — Runtime and security design
 
-Issue #49 has a proposed execution-domain decision baseline in [execution-domain-decisions.md](architecture/execution-domain-decisions.md). Confirm that business contract before adding runtime domain code. Issue #51 (workflow resolution) must precede issue #50 (execution creation) once #49 is agreed.
+Issue #49 is complete. Its accepted execution-domain contract is in [execution-domain-decisions.md](architecture/execution-domain-decisions.md). Implement issue #51 (workflow resolution) before issue #50 (execution creation).
 
 Write ADRs for:
 
@@ -39,13 +39,13 @@ Write ADRs for:
 - Logging, metrics, tracing, health checks, retention, and alerts.
 - Durable database queue versus Redpanda/broker decision.
 
-The #49 baseline proposes sequential, at-least-once execution, per-step bounded retries, immutable workflow-revision snapshots, and append-only execution history. Delivery infrastructure and production policy remain undecided.
+The accepted #49 baseline defines sequential, at-least-once execution, per-step bounded retries, immutable workflow-revision snapshots, and append-only execution history. Delivery infrastructure and production policy remain undecided.
 
 **Exit:** ADRs and a threat model are approved; one end-to-end scenario includes failure semantics.
 
 ## Milestone 3 — Execution foundation
 
-After #49 agreement, implement immutable WorkflowRevision persistence and the execution/step/attempt records. Then complete #51 workflow resolution before #50 transactional execution/step creation. Add execution read APIs and state/revision snapshot tests after the creation path is stable.
+Implement #51 workflow resolution first. Then implement immutable WorkflowRevision persistence and the execution/step/attempt records in #50, including transactional execution/step creation. Add execution read APIs and state/revision snapshot tests after the creation path is stable.
 
 **Exit:** a normalized event creates a durable, queryable execution linked to its workflow revision, with no external side effect yet.
 

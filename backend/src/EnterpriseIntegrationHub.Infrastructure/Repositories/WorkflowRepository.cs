@@ -37,6 +37,13 @@ public sealed class WorkflowRepository(EnterpriseIntegrationHubDbContext context
             .OrderBy(x => x.Name)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyCollection<Workflow>> GetActiveForSourceConnectorAsync(Guid sourceConnectorId, CancellationToken cancellationToken) =>
+        await context.Workflows
+            .AsNoTracking()
+            .Where(workflow => workflow.Status == WorkflowStatus.Active && workflow.SourceConnectorId == sourceConnectorId)
+            .Include(workflow => workflow.Steps)
+            .ToListAsync(cancellationToken);
+
     public Task<bool> HasActiveWorkflowForConnectorAsync(Guid connectorId, CancellationToken cancellationToken) =>
         context.Workflows.AnyAsync(
             workflow => workflow.Status == WorkflowStatus.Active &&

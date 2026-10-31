@@ -9,6 +9,7 @@ public interface IWorkflowRepository
     Task<Workflow?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
     Task UpdateAsync(Workflow workflow, CancellationToken cancellationToken);
     Task<IReadOnlyCollection<Workflow>> GetAllAsync(CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<Workflow>> GetActiveForSourceConnectorAsync(Guid sourceConnectorId, CancellationToken cancellationToken);
     Task<bool> HasActiveWorkflowForConnectorAsync(Guid connectorId, CancellationToken cancellationToken);
     Task<bool> HasActiveWorkflowForExternalSystemAsync(Guid externalSystemId, CancellationToken cancellationToken);
 }
