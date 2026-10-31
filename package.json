@@ -1,0 +1,9 @@
+{
+  "name": "enterprise-integration-hub",
+  "private": true,
+  "workspaces": ["frontend"],
+  "scripts": {
+    "start": "npm run start --workspace @eih/frontend",
+    "build": "npm run build --workspace @eih/frontend"
+  }
+}
