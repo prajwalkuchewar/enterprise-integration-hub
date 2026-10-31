@@ -14,5 +14,7 @@ namespace EnterpriseIntegrationHub.Application.Interfaces
         Task<Connector?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
         Task UpdateAsync(Connector connector, CancellationToken cancellationToken);
+
+        Task<bool> HasActiveConnectorForExternalSystemAsync(Guid externalSystemId, CancellationToken cancellationToken);
     }
 }

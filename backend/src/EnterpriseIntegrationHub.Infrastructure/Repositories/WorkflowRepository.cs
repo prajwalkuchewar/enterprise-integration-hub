@@ -1,5 +1,6 @@
 using EnterpriseIntegrationHub.Application.Interfaces;
 using EnterpriseIntegrationHub.Domain.Entities;
+using EnterpriseIntegrationHub.Domain.Enums;
 using EnterpriseIntegrationHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,4 +32,18 @@ public sealed class WorkflowRepository(EnterpriseIntegrationHubDbContext context
             .Include(x => x.Steps)
             .OrderBy(x => x.Name)
             .ToListAsync(cancellationToken);
+
+    public Task<bool> HasActiveWorkflowForConnectorAsync(Guid connectorId, CancellationToken cancellationToken) =>
+        context.Workflows.AnyAsync(
+            workflow => workflow.Status == WorkflowStatus.Active &&
+                (workflow.SourceConnectorId == connectorId || workflow.Steps.Any(step => step.DestinationConnectorId == connectorId)),
+            cancellationToken);
+
+    public Task<bool> HasActiveWorkflowForExternalSystemAsync(Guid externalSystemId, CancellationToken cancellationToken) =>
+        context.Workflows.AnyAsync(
+            workflow => workflow.Status == WorkflowStatus.Active &&
+                (context.Connectors.Any(connector => connector.ExternalSystemId == externalSystemId && connector.Id == workflow.SourceConnectorId) ||
+                 workflow.Steps.Any(step => context.Connectors.Any(connector =>
+                     connector.ExternalSystemId == externalSystemId && connector.Id == step.DestinationConnectorId))),
+            cancellationToken);
 }
