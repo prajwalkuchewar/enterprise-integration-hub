@@ -4,10 +4,14 @@ on:
   push:
     paths:
       - 'backend/**'
+      - 'frontend/**'
+      - 'package.json'
       - '.github/workflows/ci.yml'
   pull_request:
     paths:
       - 'backend/**'
+      - 'frontend/**'
+      - 'package.json'
       - '.github/workflows/ci.yml'
 
 permissions:
