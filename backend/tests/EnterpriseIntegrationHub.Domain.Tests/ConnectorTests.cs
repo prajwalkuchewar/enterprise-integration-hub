@@ -81,13 +81,56 @@ public class ConnectorTests
     }
 
     [Fact]
-    public void Constructor_WithZeroTimeout_AcceptsZero()
+    public void Constructor_WithZeroTimeout_Throws()
     {
-        // Act
-        var connector = CreateConnector(timeoutSeconds: 0);
+        var action = () => CreateConnector(timeoutSeconds: 0);
 
-        // Assert
-        connector.TimeoutSeconds.Should().Be(0);
+        action.Should().Throw<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void Constructor_WithBlankName_Throws(string name)
+    {
+        var action = () => CreateConnector(name: name);
+
+        action.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Constructor_WithEmptyExternalSystemId_Throws()
+    {
+        var action = () => CreateConnector(externalSystemId: Guid.Empty);
+
+        action.Should().Throw<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData("relative-path")]
+    [InlineData("ftp://example.com")]
+    public void Constructor_WithNonHttpUrl_Throws(string baseUrl)
+    {
+        var action = () => CreateConnector(baseUrl: baseUrl);
+
+        action.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Constructor_WithUndefinedProtocol_Throws()
+    {
+        var action = () => CreateConnector(protocol: (ConnectorProtocol)999);
+
+        action.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    [Fact]
+    public void UpdateCommunication_WithUndefinedAuthenticationType_Throws()
+    {
+        var connector = CreateConnector();
+        var action = () => connector.UpdateCommunication("https://api.example.com", ConnectorProtocol.REST, (ConnectorAuthenticationType)999, 30);
+
+        action.Should().Throw<ArgumentOutOfRangeException>();
     }
 
     [Fact]
