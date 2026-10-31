@@ -23,7 +23,11 @@ public sealed class WorkflowRepository(EnterpriseIntegrationHubDbContext context
     public async Task UpdateAsync(Workflow workflow, CancellationToken cancellationToken)
     {
         context.Workflows.Update(workflow);
-        await context.SaveChangesAsync(cancellationToken);
+        try { await context.SaveChangesAsync(cancellationToken); }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            throw new InvalidOperationException("The workflow changed after it was loaded. Reload it and retry the update.", exception);
+        }
     }
 
     public async Task<IReadOnlyCollection<Workflow>> GetAllAsync(CancellationToken cancellationToken) =>

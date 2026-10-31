@@ -43,4 +43,27 @@ public class WorkflowTests
         Action action = () => new Workflow("Order routing", connectorId, "OrderCreated", [new WorkflowStepDefinition(connectorId, 1)]);
         action.Should().Throw<ArgumentException>();
     }
+
+    [Fact]
+    public void Update_WhenDraftConfigurationChanges_IncrementsRevision()
+    {
+        var sourceId = Guid.NewGuid();
+        var firstDestination = Guid.NewGuid();
+        var workflow = new Workflow("Order routing", sourceId, "OrderCreated", [new(firstDestination, 1)]);
+
+        workflow.ConfigurationRevision.Should().Be(1);
+        workflow.Update("Order routing v2", sourceId, "OrderCreated", [new(firstDestination, 1)]).Should().BeTrue();
+        workflow.ConfigurationRevision.Should().Be(2);
+    }
+
+    [Fact]
+    public void Update_WhenDraftConfigurationIsUnchanged_KeepsRevision()
+    {
+        var sourceId = Guid.NewGuid();
+        var firstDestination = Guid.NewGuid();
+        var workflow = new Workflow("Order routing", sourceId, "OrderCreated", [new(firstDestination, 1)]);
+
+        workflow.Update("Order routing", sourceId, "OrderCreated", [new(firstDestination, 1)]).Should().BeFalse();
+        workflow.ConfigurationRevision.Should().Be(1);
+    }
 }

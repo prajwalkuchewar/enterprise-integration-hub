@@ -16,6 +16,7 @@ public sealed class ViewWorkflowDetailsHandler(IWorkflowRepository repository)
             workflow.SourceConnectorId,
             workflow.TriggerEvent,
             workflow.Status,
+            workflow.ConfigurationRevision,
             workflow.Steps.OrderBy(x => x.ExecutionOrder)
                 .Select(x => new WorkflowStepResponseModel(x.DestinationConnectorId, x.ExecutionOrder))
                 .ToList());

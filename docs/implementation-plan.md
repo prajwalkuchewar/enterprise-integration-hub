@@ -1,6 +1,6 @@
 # Implementation Plan — From Configuration to Reliable Execution
 
-**Status:** Proposed. This plan is not a claim that the runtime exists.
+**Status:** Milestone 1 complete; later runtime milestones remain planned. This plan is not a claim that the runtime exists.
 
 ## Milestone 0 — Baseline and quality
 
@@ -14,17 +14,16 @@
 ## Milestone 1 — Configuration hardening
 
 1. [x] Move essential connector/external-system invariants into domain behavior; reject empty IDs and invalid enum values at the boundary.
-2. [ ] Block connector deactivation when an active workflow references it; return a clear conflict.
-3. [ ] Decide equivalent external-system dependency behavior.
-4. [ ] Add centralized exception handling with a stable ProblemDetails contract.
-5. [x] Add SQL Server relational integration tests for migrations, unique indexes, and foreign keys.
-6. [x] Add API-host lifecycle tests with WebApplicationFactory.
-7. [ ] Add optimistic concurrency and map conflicts to 409.
-8. [ ] Define immutable workflow publication/versioning.
+2. [x] Block connector deactivation when an active workflow references it; return a clear conflict.
+3. [x] Block external-system deactivation when active connectors or workflows depend on it.
+4. [x] Add centralized exception handling with a stable ProblemDetails contract.
+5. [x] Add API-host lifecycle tests and SQL Server relational integration tests.
+6. [x] Add SQL Server rowversion optimistic concurrency for configuration records and map stale updates to 409.
+7. [x] Define workflow revision semantics: revisions begin at 1, increment only for changed Draft configuration, and the activated revision is immutable. Runtime executions will persist the exact revision they use.
 
 The SQL Server tests use Testcontainers by default. Set `EIH_SQLSERVER_TEST_CONNECTION` to use an existing SQL Server instance instead; Docker is required when no connection string is configured.
 
-**Exit:** configuration is safe and versioned enough to become runtime input.
+**Exit:** met. Configuration writes have relational constraints, lifecycle rules, request validation, conflict handling, integration coverage, and persisted concurrency tokens. Workflow API responses expose the current configuration revision. Execution persistence and revision snapshots remain part of Milestone 3.
 
 ## Milestone 2 — Runtime and security design
 
@@ -73,4 +72,3 @@ Add dashboard/search, OpenTelemetry, structured logs, metrics, health/alerts, au
 ## First ticket
 
 **Block connector deactivation when an active workflow references the connector.** It is a small, real business policy that improves current correctness and exercises dependency checking before runtime complexity.
-

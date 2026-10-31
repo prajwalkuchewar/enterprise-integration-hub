@@ -12,6 +12,7 @@ public sealed class Workflow : BaseEntity
     public Guid SourceConnectorId { get; private set; }
     public string TriggerEvent { get; private set; } = string.Empty;
     public WorkflowStatus Status { get; private set; }
+    public int ConfigurationRevision { get; private set; } = 1;
 
     private Workflow() { }
 
@@ -72,6 +73,7 @@ public sealed class Workflow : BaseEntity
             Steps.Add(new WorkflowStep(Id, step.DestinationConnectorId, step.ExecutionOrder));
         }
         UpdatedAt = DateTimeOffset.UtcNow;
+        ConfigurationRevision = checked(ConfigurationRevision + 1);
         return true;
     }
 }

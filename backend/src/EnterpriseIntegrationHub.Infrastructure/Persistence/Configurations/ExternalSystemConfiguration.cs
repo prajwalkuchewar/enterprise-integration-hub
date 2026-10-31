@@ -38,6 +38,8 @@ public sealed class ExternalSystemConfiguration : IEntityTypeConfiguration<Exter
         builder.Property(x => x.UpdatedAt)
             .IsRequired(false);
 
+        builder.Property(x => x.RowVersion).IsRowVersion();
+
         builder.HasIndex(x => new { x.Name, x.Environment })
             .IsUnique()
             .HasDatabaseName("IX_ExternalSystems_Name_Environment");

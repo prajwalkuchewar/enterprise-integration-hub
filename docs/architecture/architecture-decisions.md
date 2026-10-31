@@ -96,6 +96,26 @@ Accepted
 
 ---
 
+# ADR-008
+
+## Decision
+
+Configuration records use SQL Server `rowversion` tokens for optimistic concurrency. An update based on a stale token fails and is returned as HTTP 409 so the caller can reload current configuration.
+
+Each workflow starts at configuration revision 1. A successful update to a Draft workflow increments the revision once only when its effective configuration changes. An unchanged update does not increment it. Activation freezes that revision because active workflows cannot be edited.
+
+When runtime execution is implemented, each execution will reference and snapshot the exact workflow revision it started with. Later revisions must not change the configuration used by an existing execution. Revision persistence and execution snapshots are part of Milestone 3.
+
+## Reason
+
+Rowversion prevents concurrent edits from silently overwriting one another. An explicit workflow revision gives API clients and future execution records a stable identifier for the configuration that was published.
+
+Status
+
+Accepted
+
+---
+
 # ADR-007
 
 ## Decision
