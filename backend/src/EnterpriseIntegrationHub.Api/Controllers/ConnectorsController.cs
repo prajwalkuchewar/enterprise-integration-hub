@@ -48,9 +48,8 @@ public sealed class ConnectorsController : ControllerBase
     [HttpPost("{id:guid}/deactivate")]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
     {
-        try { await _deactivateHandler.Handle(new DeactivateConnectorCommand(id), cancellationToken); return NoContent(); }
-        catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
-        catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
+        await _deactivateHandler.Handle(new DeactivateConnectorCommand(id), cancellationToken);
+        return NoContent();
     }
 
     /// <summary>
@@ -75,23 +74,8 @@ public sealed class ConnectorsController : ControllerBase
             request.AuthenticationType,
             request.TimeoutSeconds);
 
-        try
-        {
-            var id = await _createHandler.Handle(command, cancellationToken);
-            return Created($"/api/connectors/{id}", new { id });
-        }
-        catch (ArgumentException exception)
-        {
-            return BadRequest(new { message = exception.Message });
-        }
-        catch (InvalidOperationException exception)
-        {
-            return Conflict(new { message = exception.Message });
-        }
-        catch (KeyNotFoundException exception)
-        {
-            return NotFound(new { message = exception.Message });
-        }
+        var id = await _createHandler.Handle(command, cancellationToken);
+        return Created($"/api/connectors/{id}", new { id });
     }
 
 
@@ -118,23 +102,8 @@ public sealed class ConnectorsController : ControllerBase
             request.AuthenticationType,
             request.TimeoutSeconds);
 
-        try
-        {
-            await _updateHandler.Handle(id, command, cancellationToken);
-            return NoContent();
-        }
-        catch (ArgumentException exception)
-        {
-            return BadRequest(new { message = exception.Message });
-        }
-        catch (KeyNotFoundException exception)
-        {
-            return NotFound(new { message = exception.Message });
-        }
-        catch (InvalidOperationException exception)
-        {
-            return Conflict(new { message = exception.Message });
-        }
+        await _updateHandler.Handle(id, command, cancellationToken);
+        return NoContent();
     }
 
 
@@ -164,15 +133,8 @@ public sealed class ConnectorsController : ControllerBase
     public async Task<IActionResult> ViewDetails([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var query = new ViewConnectorDetailsQuery(id);
-        try
-        {
-            var response = await _viewDetailsHandler.Handle(query, cancellationToken);
-            return Ok(response);
-        }
-        catch (KeyNotFoundException exception)
-        {
-            return NotFound(new { message = exception.Message });
-        }
+        var response = await _viewDetailsHandler.Handle(query, cancellationToken);
+        return Ok(response);
     }
 
     /// <summary>
@@ -190,22 +152,7 @@ public sealed class ConnectorsController : ControllerBase
     {
         var command = new ActivateConnectorCommand(id);
 
-        try
-        {
-            await _activateHandler.Handle(command, cancellationToken);
-            return NoContent();
-        }
-        catch (ArgumentException exception)
-        {
-            return BadRequest(new { message = exception.Message });
-        }
-        catch (KeyNotFoundException exception)
-        {
-            return NotFound(new { message = exception.Message });
-        }
-        catch (InvalidOperationException exception)
-        {
-            return Conflict(new { message = exception.Message });
-        }
+        await _activateHandler.Handle(command, cancellationToken);
+        return NoContent();
     }
 }

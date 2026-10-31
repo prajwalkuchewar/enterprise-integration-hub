@@ -29,15 +29,9 @@ public sealed class WorkflowsController(
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Create(CreateWorkflowRequest request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var steps = request.Steps.Select(x => new CreateWorkflowStepCommand(x.DestinationConnectorId, x.ExecutionOrder)).ToArray();
-            var id = await createHandler.Handle(new CreateWorkflowCommand(request.Name, request.SourceConnectorId, steps, request.TriggerEvent), cancellationToken);
-            return Created($"/api/workflows/{id}", new { id });
-        }
-        catch (ArgumentException exception) { return BadRequest(new { message = exception.Message }); }
-        catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
-        catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
+        var steps = request.Steps.Select(x => new CreateWorkflowStepCommand(x.DestinationConnectorId, x.ExecutionOrder)).ToArray();
+        var id = await createHandler.Handle(new CreateWorkflowCommand(request.Name, request.SourceConnectorId, steps, request.TriggerEvent), cancellationToken);
+        return Created($"/api/workflows/{id}", new { id });
     }
 
     /// <summary>Activates a draft workflow whose connectors are still active.</summary>
@@ -49,14 +43,8 @@ public sealed class WorkflowsController(
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Activate(Guid id, CancellationToken cancellationToken)
     {
-        try
-        {
-            await activateHandler.Handle(new ActivateWorkflowCommand(id), cancellationToken);
-            return NoContent();
-        }
-        catch (ArgumentException exception) { return BadRequest(new { message = exception.Message }); }
-        catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
-        catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
+        await activateHandler.Handle(new ActivateWorkflowCommand(id), cancellationToken);
+        return NoContent();
     }
 
     /// <summary>Updates a draft workflow and replaces its ordered steps.</summary>
@@ -67,15 +55,9 @@ public sealed class WorkflowsController(
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Update(Guid id, UpdateWorkflowRequest request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var steps = request.Steps.Select(x => new UpdateWorkflowStepCommand(x.DestinationConnectorId, x.ExecutionOrder)).ToArray();
-            await updateHandler.Handle(id, new UpdateWorkflowCommand(request.Name, request.SourceConnectorId, steps, request.TriggerEvent), cancellationToken);
-            return NoContent();
-        }
-        catch (ArgumentException exception) { return BadRequest(new { message = exception.Message }); }
-        catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
-        catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
+        var steps = request.Steps.Select(x => new UpdateWorkflowStepCommand(x.DestinationConnectorId, x.ExecutionOrder)).ToArray();
+        await updateHandler.Handle(id, new UpdateWorkflowCommand(request.Name, request.SourceConnectorId, steps, request.TriggerEvent), cancellationToken);
+        return NoContent();
     }
 
     /// <summary>Browses workflows in name order.</summary>
@@ -90,7 +72,6 @@ public sealed class WorkflowsController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ViewDetails(Guid id, CancellationToken cancellationToken)
     {
-        try { return Ok(await viewDetailsHandler.Handle(new ViewWorkflowDetailsQuery(id), cancellationToken)); }
-        catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
+        return Ok(await viewDetailsHandler.Handle(new ViewWorkflowDetailsQuery(id), cancellationToken));
     }
 }
