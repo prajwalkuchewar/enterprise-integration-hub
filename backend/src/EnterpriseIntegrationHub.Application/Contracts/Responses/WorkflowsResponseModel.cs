@@ -10,4 +10,5 @@ public sealed record WorkflowSummary(
     Guid SourceConnectorId,
     string TriggerEvent,
     WorkflowStatus Status,
+    int ConfigurationRevision,
     int StepCount);

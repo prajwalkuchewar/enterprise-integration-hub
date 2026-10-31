@@ -55,7 +55,11 @@ public sealed class ExternalSystemRepository : IExternalSystemRepository
     public async Task UpdateAsync(ExternalSystem externalSystem, CancellationToken cancellationToken)
     {
         _context.ExternalSystems.Update(externalSystem);
-        await _context.SaveChangesAsync(cancellationToken);
+        try { await _context.SaveChangesAsync(cancellationToken); }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            throw new InvalidOperationException("The external system changed after it was loaded. Reload it and retry the update.", exception);
+        }
     }
 
 }

@@ -43,7 +43,11 @@ public sealed class ConnectorRepository : IConnectorRepository
     public async Task UpdateAsync(Connector connector, CancellationToken cancellationToken)
     {
         _context.Connectors.Update(connector);
-        await _context.SaveChangesAsync(cancellationToken);
+        try { await _context.SaveChangesAsync(cancellationToken); }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            throw new InvalidOperationException("The connector changed after it was loaded. Reload it and retry the update.", exception);
+        }
     }
 
     public async Task<bool> ExistsAsync(Guid externalSystemId, string name, CancellationToken cancellationToken, Guid? excludedConnectorId = null)
