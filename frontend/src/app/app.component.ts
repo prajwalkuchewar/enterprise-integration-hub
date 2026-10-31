@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
@@ -20,9 +20,11 @@ type ModalKind = 'system' | 'connector' | 'workflow' | null;
   imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, RouterOutlet],
   templateUrl: './app.component.html'
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, AfterViewChecked {
   private readonly api = inject(HubApiService);
   private readonly router = inject(Router);
+  private refreshGeneration = 0;
+  @ViewChild('modalDialog') private modalDialog?: ElementRef<HTMLDialogElement>;
 
   readonly environments = environments;
   readonly protocols = protocols;
@@ -58,19 +60,27 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event) => {
-        const path = event.urlAfterRedirects.split('/')[1] as Section | undefined;
+        const path = this.router.parseUrl(event.urlAfterRedirects).root.children['primary']?.segments[0]?.path as Section | undefined;
         this.section = path === 'systems' || path === 'connectors' || path === 'workflows' ? path : 'dashboard';
         this.search = '';
       });
     this.refresh();
   }
 
+  ngAfterViewChecked(): void {
+    if (this.modal && this.modalDialog && !this.modalDialog.nativeElement.open) {
+      this.modalDialog.nativeElement.showModal();
+    }
+  }
+
   refresh(): void {
+    const generation = ++this.refreshGeneration;
     this.loading = true;
     this.connectionState = 'connecting';
     this.apiError = '';
     let remaining = 3;
     const finished = (): void => {
+      if (generation !== this.refreshGeneration) return;
       remaining -= 1;
       if (remaining === 0) {
         this.loading = false;
@@ -79,16 +89,43 @@ export class AppComponent implements OnInit {
     };
 
     this.api.getSystems().subscribe({
-      next: (response) => { this.systems = response.items ?? []; finished(); },
-      error: (error: unknown) => { this.apiError = this.errorMessage(error); this.systems = []; finished(); }
+      next: (response) => {
+        if (generation !== this.refreshGeneration) return;
+        this.systems = response.items ?? [];
+        finished();
+      },
+      error: (error: unknown) => {
+        if (generation !== this.refreshGeneration) return;
+        this.apiError = this.errorMessage(error);
+        this.systems = [];
+        finished();
+      }
     });
     this.api.getConnectors().subscribe({
-      next: (response) => { this.connectors = response.items ?? []; finished(); },
-      error: (error: unknown) => { this.apiError = this.errorMessage(error); this.connectors = []; finished(); }
+      next: (response) => {
+        if (generation !== this.refreshGeneration) return;
+        this.connectors = response.items ?? [];
+        finished();
+      },
+      error: (error: unknown) => {
+        if (generation !== this.refreshGeneration) return;
+        this.apiError = this.errorMessage(error);
+        this.connectors = [];
+        finished();
+      }
     });
     this.api.getWorkflows().subscribe({
-      next: (response) => { this.workflows = response.items ?? []; finished(); },
-      error: (error: unknown) => { this.apiError = this.errorMessage(error); this.workflows = []; finished(); }
+      next: (response) => {
+        if (generation !== this.refreshGeneration) return;
+        this.workflows = response.items ?? [];
+        finished();
+      },
+      error: (error: unknown) => {
+        if (generation !== this.refreshGeneration) return;
+        this.apiError = this.errorMessage(error);
+        this.workflows = [];
+        finished();
+      }
     });
   }
 
@@ -167,7 +204,32 @@ export class AppComponent implements OnInit {
     });
   }
 
-  closeModal(): void { this.modal = null; this.editingId = null; }
+  closeModal(): void {
+    if (this.saving) return;
+    this.modalDialog?.nativeElement.close();
+    this.modal = null;
+    this.editingId = null;
+  }
+
+  onModalCancel(event: Event): void {
+    if (this.saving) {
+      event.preventDefault();
+    }
+  }
+
+  onModalClosed(): void {
+    this.modal = null;
+    this.editingId = null;
+  }
+
+  sourceConnectorChanged(sourceConnectorId: string): void {
+    this.workflowForm.sourceConnectorId = sourceConnectorId;
+    this.workflowForm.steps = this.workflowForm.steps.map((step) =>
+      step.destinationConnectorId === sourceConnectorId
+        ? { ...step, destinationConnectorId: '' }
+        : step
+    );
+  }
 
   saveSystem(): void {
     this.saving = true;
