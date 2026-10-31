@@ -48,32 +48,24 @@ public sealed class ExternalSystemsController : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateExternalSystemRequest request, CancellationToken cancellationToken)
     {
-        try
-        {
-            await _updateHandler.Handle(id, new UpdateExternalSystemCommand(request.Name, request.Description, request.Environment), cancellationToken);
-            return NoContent();
-        }
-        catch (ArgumentException exception) { return BadRequest(new { message = exception.Message }); }
-        catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
-        catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
+        await _updateHandler.Handle(id, new UpdateExternalSystemCommand(request.Name, request.Description, request.Environment), cancellationToken);
+        return NoContent();
     }
 
     /// <summary>Activates an inactive external system.</summary>
     [HttpPost("{id:guid}/activate")]
     public async Task<IActionResult> Activate(Guid id, CancellationToken cancellationToken)
     {
-        try { await _activateHandler.Handle(new ActivateExternalSystemCommand(id), cancellationToken); return NoContent(); }
-        catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
-        catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
+        await _activateHandler.Handle(new ActivateExternalSystemCommand(id), cancellationToken);
+        return NoContent();
     }
 
     /// <summary>Deactivates an active external system.</summary>
     [HttpPost("{id:guid}/deactivate")]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
     {
-        try { await _deactivateHandler.Handle(new DeactivateExternalSystemCommand(id), cancellationToken); return NoContent(); }
-        catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
-        catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
+        await _deactivateHandler.Handle(new DeactivateExternalSystemCommand(id), cancellationToken);
+        return NoContent();
     }
 
     /// <summary>
@@ -94,23 +86,8 @@ public sealed class ExternalSystemsController : ControllerBase
             request.Description,
             request.Environment);
 
-        try
-        {
-            var id = await _createHandler.Handle(command, cancellationToken);
-            return Created($"/api/external-systems/{id}", new { id });
-        }
-        catch (ArgumentException exception)
-        {
-            return BadRequest(new { message = exception.Message });
-        }
-        catch (InvalidOperationException exception)
-        {
-            return Conflict(new { message = exception.Message });
-        }
-        catch (KeyNotFoundException exception)
-        {
-            return NotFound(new { message = exception.Message });
-        }
+        var id = await _createHandler.Handle(command, cancellationToken);
+        return Created($"/api/external-systems/{id}", new { id });
     }
 
     /// <summary>
@@ -139,14 +116,7 @@ public sealed class ExternalSystemsController : ControllerBase
     public async Task<IActionResult> ViewDetails([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var query = new ViewExternalSystemDetailsQuery(id);
-        try
-        {
-            var response = await _viewDetailsHandler.Handle(query, cancellationToken);
-            return Ok(response);
-        }
-        catch (KeyNotFoundException exception)
-        {
-            return NotFound(new { message = exception.Message });
-        }
+        var response = await _viewDetailsHandler.Handle(query, cancellationToken);
+        return Ok(response);
     }
 }
