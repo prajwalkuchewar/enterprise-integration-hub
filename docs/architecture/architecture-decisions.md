@@ -131,3 +131,25 @@ This allows the Domain Model to evolve independently of API consumers.
 Status
 
 Accepted
+
+---
+
+# ADR-009 — Runtime execution history
+
+## Decision
+
+An `IntegrationExecution` is the durable record of one accepted source event processed against one immutable `WorkflowRevision`. It owns ordered `ExecutionStep` records; each step owns append-only invocation attempts. Execution history records sanitized metadata and outcomes, not secrets or unredacted response bodies.
+
+The first runtime is sequential and at-least-once. Automatic retries append attempts to the failed step and do not repeat completed steps. A step failure stops later steps without compensating earlier external side effects. Operator replay creates a new execution pinned to the original revision and resumes at the failed step by default. Execution creation, step snapshots, and dispatch intent are committed together; external calls occur outside the database transaction.
+
+See [Runtime Execution Domain Decisions](execution-domain-decisions.md) for ownership boundaries, states, transition table, idempotency, failure classification, and scope.
+
+## Reason
+
+Durable immutable history makes event handling auditable, makes retry behavior explicit, and prevents workflow edits from changing the plan of an execution already in progress. At-least-once delivery reflects the limits of coordinating a database with external systems.
+
+Status
+
+Proposed; pending owner/mentor agreement. Implementation is pending.
+
+---

@@ -27,6 +27,8 @@ The SQL Server tests use Testcontainers by default. Set `EIH_SQLSERVER_TEST_CONN
 
 ## Milestone 2 — Runtime and security design
 
+Issue #49 has a proposed execution-domain decision baseline in [execution-domain-decisions.md](architecture/execution-domain-decisions.md). Confirm that business contract before adding runtime domain code. Issue #51 (workflow resolution) must precede issue #50 (execution creation) once #49 is agreed.
+
 Write ADRs for:
 
 - Normalized event envelope: ID, type, source, occurred time, correlation ID, payload metadata, schema version.
@@ -37,11 +39,13 @@ Write ADRs for:
 - Logging, metrics, tracing, health checks, retention, and alerts.
 - Durable database queue versus Redpanda/broker decision.
 
+The #49 baseline proposes sequential, at-least-once execution, per-step bounded retries, immutable workflow-revision snapshots, and append-only execution history. Delivery infrastructure and production policy remain undecided.
+
 **Exit:** ADRs and a threat model are approved; one end-to-end scenario includes failure semantics.
 
 ## Milestone 3 — Execution foundation
 
-Implement WorkflowRevision, IntegrationExecution, and ExecutionStep models; resolver; transactional execution/step creation; execution read APIs and UI; and tests for state transitions and revision snapshotting.
+After #49 agreement, implement immutable WorkflowRevision persistence and the execution/step/attempt records. Then complete #51 workflow resolution before #50 transactional execution/step creation. Add execution read APIs and state/revision snapshot tests after the creation path is stable.
 
 **Exit:** a normalized event creates a durable, queryable execution linked to its workflow revision, with no external side effect yet.
 
@@ -69,6 +73,8 @@ Add dashboard/search, OpenTelemetry, structured logs, metrics, health/alerts, au
 
 **Exit:** a documented deployment is secure, observable, recoverable, and operable by someone other than the developer.
 
-## First ticket
+## Active runtime-design tickets
 
-**Block connector deactivation when an active workflow references the connector.** It is a small, real business policy that improves current correctness and exercises dependency checking before runtime complexity.
+1. **#49 — Define the integration execution domain model.** Confirm the proposed lifecycle and ownership contract before adding domain code.
+2. **#51 — Resolve workflow from trigger event.** Make this a prerequisite of #50 and have the resolver return an active immutable workflow revision.
+3. **#50 — Create workflow execution.** Persist the execution, step snapshots, and dispatch intent atomically after resolution.

@@ -2,17 +2,8 @@ name: Continuous Integration
 
 on:
   push:
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - 'package.json'
-      - '.github/workflows/ci.yml'
   pull_request:
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - 'package.json'
-      - '.github/workflows/ci.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -29,6 +20,21 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: .
+
+      - name: Build Angular frontend
+        run: npm run build --workspace @eih/frontend
+        working-directory: .
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
