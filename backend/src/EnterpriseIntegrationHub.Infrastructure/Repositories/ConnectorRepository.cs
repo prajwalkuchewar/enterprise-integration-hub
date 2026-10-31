@@ -55,4 +55,11 @@ public sealed class ConnectorRepository : IConnectorRepository
                 (excludedConnectorId == null || x.Id != excludedConnectorId.Value),
                 cancellationToken);
     }
+
+    public Task<bool> HasActiveConnectorForExternalSystemAsync(Guid externalSystemId, CancellationToken cancellationToken)
+    {
+        return _context.Connectors.AnyAsync(
+            connector => connector.ExternalSystemId == externalSystemId && connector.Status == ConnectorStatus.Active,
+            cancellationToken);
+    }
 }
