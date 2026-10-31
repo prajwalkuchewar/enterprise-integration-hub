@@ -17,6 +17,7 @@ using EnterpriseIntegrationHub.Application.Features.Workflows.Activate;
 using EnterpriseIntegrationHub.Application.Features.Workflows.Update;
 using EnterpriseIntegrationHub.Application.Features.Workflows.ViewDetails;
 using EnterpriseIntegrationHub.Application.Features.Workflows.Resolve;
+using EnterpriseIntegrationHub.Application.Features.Executions.Create;
 
 using EnterpriseIntegrationHub.Application.Interfaces;
 using EnterpriseIntegrationHub.Infrastructure.Persistence;
@@ -69,6 +70,8 @@ namespace EnterpriseIntegrationHub.Api
             services.AddScoped<UpdateWorkflowHandler>();
             services.AddScoped<ViewWorkflowDetailsHandler>();
             services.AddScoped<ResolveWorkflowHandler>();
+            services.AddScoped<CreateWorkflowExecutionHandler>();
+            services.AddScoped<IIntegrationExecutionRepository, IntegrationExecutionRepository>();
             services.AddScoped<IWorkflowRepository, WorkflowRepository>();
 
             // Cross-origin requests (adjust origins as needed)

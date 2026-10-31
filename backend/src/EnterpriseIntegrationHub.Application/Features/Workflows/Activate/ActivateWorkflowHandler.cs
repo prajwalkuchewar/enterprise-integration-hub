@@ -1,4 +1,5 @@
 using EnterpriseIntegrationHub.Application.Interfaces;
+using EnterpriseIntegrationHub.Domain.Entities;
 using EnterpriseIntegrationHub.Domain.Enums;
 
 namespace EnterpriseIntegrationHub.Application.Features.Workflows.Activate;

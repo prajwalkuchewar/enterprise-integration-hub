@@ -1,6 +1,6 @@
 # Workflow Resolution
 
-**Status:** Implemented as an internal application capability for P1 issue #51. It does not expose an ingestion endpoint or create executions.
+**Status:** Implemented on P1 #51/#50 branches as an internal application capability. It does not expose an ingestion endpoint or create executions.
 
 ## Contract
 
@@ -11,9 +11,9 @@ The caller supplies the source connector ID and trigger-event identifier from a 
 3. Returns a no-match result when no active workflow matches.
 4. Returns a conflict when more than one active workflow matches; it never selects an arbitrary candidate.
 5. Requires the matched workflow's source and destination connectors to still be Active.
-6. Returns the workflow ID, current configuration revision, and destination steps ordered by execution order.
+6. Returns the persisted immutable workflow revision, including ordered destinations and their non-secret connector configuration needed by execution.
 
-The result is read-only. It is passed to the execution-creation capability (#50), which will persist the exact workflow and step snapshot together with its dispatch intent. Resolution itself performs no destination side effects and creates no execution record.
+The result is read-only. It is passed to the execution-creation capability (#50), which persists the exact workflow revision and step snapshots together with its dispatch intent. Resolution itself performs no destination side effects and creates no execution record.
 
 ## Failure behavior
 

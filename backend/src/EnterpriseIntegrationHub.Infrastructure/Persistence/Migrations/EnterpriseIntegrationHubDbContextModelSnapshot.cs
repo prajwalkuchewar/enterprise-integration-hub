@@ -81,6 +81,116 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.ToTable("Connectors", (string)null);
                 });
 
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionDispatchOutbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DispatchedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("IntegrationExecutionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IntegrationExecutionId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ExecutionDispatchOutbox_ExecutionId");
+
+                    b.ToTable("ExecutionDispatchOutbox", (string)null);
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionStep", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("AuthenticationType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DestinationBaseUrl")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("DestinationConnectorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ExecutionOrder")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("IntegrationExecutionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("NextAttemptAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Protocol")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TimeoutSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("WorkflowRevisionStepId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DestinationConnectorId");
+
+                    b.HasIndex("WorkflowRevisionStepId");
+
+                    b.HasIndex("IntegrationExecutionId", "ExecutionOrder")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ExecutionSteps_ExecutionId_ExecutionOrder");
+
+                    b.ToTable("ExecutionSteps", (string)null);
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionStepAttempt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("AttemptNumber")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("ExecutionStepId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FailureCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("FailureMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExecutionStepId", "AttemptNumber")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ExecutionStepAttempts_StepId_AttemptNumber");
+
+                    b.ToTable("ExecutionStepAttempts", (string)null);
+                });
+
             modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExternalSystem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -122,6 +232,81 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("IX_ExternalSystems_Name_Environment");
 
                     b.ToTable("ExternalSystems", (string)null);
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.IntegrationExecution", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("EventFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("ReceivedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("SourceConnectorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SourceEventId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .UseCollation("SQL_Latin1_General_CP1_CS_AS");
+
+                    b.Property<DateTimeOffset?>("StartedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TriggerEvent")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("WorkflowId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WorkflowRevisionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("WorkflowRevisionNumber")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkflowRevisionId");
+
+                    b.HasIndex("SourceConnectorId", "SourceEventId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_IntegrationExecutions_SourceConnectorId_SourceEventId");
+
+                    b.ToTable("IntegrationExecutions", (string)null);
                 });
 
             modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.Workflow", b =>
@@ -172,6 +357,82 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.ToTable("Workflows", (string)null);
                 });
 
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.WorkflowRevision", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .UseCollation("SQL_Latin1_General_CP1_CI_AS");
+
+                    b.Property<DateTimeOffset>("PublishedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("RevisionNumber")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("SourceConnectorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TriggerEvent")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("WorkflowId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceConnectorId");
+
+                    b.HasIndex("WorkflowId", "RevisionNumber")
+                        .IsUnique()
+                        .HasDatabaseName("IX_WorkflowRevisions_WorkflowId_RevisionNumber");
+
+                    b.ToTable("WorkflowRevisions", (string)null);
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.WorkflowRevisionStep", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DestinationConnectorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ExecutionOrder")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("WorkflowRevisionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DestinationConnectorId");
+
+                    b.HasIndex("WorkflowRevisionId", "ExecutionOrder")
+                        .IsUnique()
+                        .HasDatabaseName("IX_WorkflowRevisionSteps_RevisionId_ExecutionOrder");
+
+                    b.ToTable("WorkflowRevisionSteps", (string)null);
+                });
+
             modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.WorkflowStep", b =>
                 {
                     b.Property<Guid>("WorkflowId")
@@ -199,12 +460,96 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionDispatchOutbox", b =>
+                {
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.IntegrationExecution", null)
+                        .WithMany()
+                        .HasForeignKey("IntegrationExecutionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionStep", b =>
+                {
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.Connector", null)
+                        .WithMany()
+                        .HasForeignKey("DestinationConnectorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.IntegrationExecution", null)
+                        .WithMany("Steps")
+                        .HasForeignKey("IntegrationExecutionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.WorkflowRevisionStep", null)
+                        .WithMany()
+                        .HasForeignKey("WorkflowRevisionStepId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionStepAttempt", b =>
+                {
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.ExecutionStep", null)
+                        .WithMany("Attempts")
+                        .HasForeignKey("ExecutionStepId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.IntegrationExecution", b =>
+                {
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.Connector", null)
+                        .WithMany()
+                        .HasForeignKey("SourceConnectorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.WorkflowRevision", null)
+                        .WithMany()
+                        .HasForeignKey("WorkflowRevisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.Workflow", b =>
                 {
                     b.HasOne("EnterpriseIntegrationHub.Domain.Entities.Connector", null)
                         .WithMany()
                         .HasForeignKey("SourceConnectorId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.WorkflowRevision", b =>
+                {
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.Connector", null)
+                        .WithMany()
+                        .HasForeignKey("SourceConnectorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.Workflow", null)
+                        .WithMany()
+                        .HasForeignKey("WorkflowId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.WorkflowRevisionStep", b =>
+                {
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.Connector", null)
+                        .WithMany()
+                        .HasForeignKey("DestinationConnectorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.WorkflowRevision", null)
+                        .WithMany("Steps")
+                        .HasForeignKey("WorkflowRevisionId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
@@ -223,7 +568,22 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionStep", b =>
+                {
+                    b.Navigation("Attempts");
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.IntegrationExecution", b =>
+                {
+                    b.Navigation("Steps");
+                });
+
             modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.Workflow", b =>
+                {
+                    b.Navigation("Steps");
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.WorkflowRevision", b =>
                 {
                     b.Navigation("Steps");
                 });

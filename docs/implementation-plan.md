@@ -45,7 +45,7 @@ The accepted #49 baseline defines sequential, at-least-once execution, per-step 
 
 ## Milestone 3 — Execution foundation
 
-Implement #51 workflow resolution first. Then implement immutable WorkflowRevision persistence and the execution/step/attempt records in #50, including transactional execution/step creation. Add execution read APIs and state/revision snapshot tests after the creation path is stable.
+Implement #51 workflow resolution first. Issue #50 then persists a workflow revision on activation, creates queued IntegrationExecution and ordered ExecutionStep records idempotently, and writes an outbox dispatch intent atomically. Add execution read APIs and worker-side state transitions after the creation path is stable.
 
 **Exit:** a normalized event creates a durable, queryable execution linked to its workflow revision, with no external side effect yet.
 
