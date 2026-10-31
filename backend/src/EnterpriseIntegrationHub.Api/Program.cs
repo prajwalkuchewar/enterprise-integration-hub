@@ -12,3 +12,8 @@ var app = builder.Build();
 startup.Configure(app);
 
 app.Run();
+
+/// <summary>Exposes the API entry point to the ASP.NET Core test host.</summary>
+public partial class Program
+{
+}
