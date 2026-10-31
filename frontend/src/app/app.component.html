@@ -143,8 +143,8 @@
   @if (notice) { <div class="toast" role="status"><span>✓</span>{{ notice }}</div> }
 
   @if (modal) {
-    <dialog #modalDialog class="modal-backdrop" (click)="closeModal()" (cancel)="onModalCancel($event)" (close)="onModalClosed()">
-      <section class="modal-card" [attr.aria-labelledby]="'modal-title'" (click)="$event.stopPropagation()">
+    <dialog #modalDialog class="modal-backdrop" [attr.aria-labelledby]="'modal-title'" (click)="closeModal()" (cancel)="onModalCancel($event)" (close)="onModalClosed()">
+      <section class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-heading"><div><div class="eyebrow">{{ editingId ? 'UPDATE CONFIGURATION' : 'NEW CONFIGURATION' }}</div><h2 id="modal-title">@if (modal === 'system') { {{ editingId ? 'Edit external system' : 'Register a system' }} } @else if (modal === 'connector') { {{ editingId ? 'Edit connector' : 'Create a connector' }} } @else { {{ editingId ? 'Edit workflow' : 'Create a workflow' }} }</h2></div><button type="button" class="modal-close" aria-label="Close dialog" (click)="closeModal()">×</button></div>
         @if (apiError) { <div class="alert alert-error modal-alert" role="alert"><span class="alert-symbol">!</span><span>{{ apiError }}</span></div> }
 

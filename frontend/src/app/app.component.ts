@@ -214,10 +214,7 @@ export class AppComponent implements OnInit, AfterViewChecked {
   onModalCancel(event: Event): void {
     if (this.saving) {
       event.preventDefault();
-      return;
     }
-    this.modal = null;
-    this.editingId = null;
   }
 
   onModalClosed(): void {
