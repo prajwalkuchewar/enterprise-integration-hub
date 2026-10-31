@@ -89,6 +89,8 @@ namespace EnterpriseIntegrationHub.Api
                 app.UseSwaggerDocumentation();
             }
 
+            app.UseApiExceptionHandling();
+
             // Middleware
             app.UseRouting();
             app.UseCors(DefaultCorsPolicy);

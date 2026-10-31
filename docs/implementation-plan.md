@@ -21,6 +21,8 @@
 6. [x] Add SQL Server rowversion optimistic concurrency for configuration records and map stale updates to 409.
 7. [x] Define workflow revision semantics: revisions begin at 1, increment only for changed Draft configuration, and the activated revision is immutable. Runtime executions will persist the exact revision they use.
 
+The SQL Server tests use Testcontainers by default. Set `EIH_SQLSERVER_TEST_CONNECTION` to use an existing SQL Server instance instead; Docker is required when no connection string is configured.
+
 **Exit:** met. Configuration writes have relational constraints, lifecycle rules, request validation, conflict handling, integration coverage, and persisted concurrency tokens. Workflow API responses expose the current configuration revision. Execution persistence and revision snapshots remain part of Milestone 3.
 
 ## Milestone 2 — Runtime and security design
@@ -70,4 +72,3 @@ Add dashboard/search, OpenTelemetry, structured logs, metrics, health/alerts, au
 ## First ticket
 
 **Block connector deactivation when an active workflow references the connector.** It is a small, real business policy that improves current correctness and exercises dependency checking before runtime complexity.
-
