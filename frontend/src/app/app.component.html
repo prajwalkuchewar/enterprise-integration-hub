@@ -1,0 +1,190 @@
+<div class="app-frame">
+  <aside class="sidebar">
+    <a class="brand" routerLink="/dashboard" aria-label="Integration Hub home">
+      <span class="brand-mark"><span></span><span></span><span></span><span></span></span>
+      <span class="brand-copy"><strong>nexus</strong><small>INTEGRATION HUB</small></span>
+    </a>
+
+    <div class="workspace-label">WORKSPACE</div>
+    <nav class="primary-nav" aria-label="Main navigation">
+      <a routerLink="/dashboard" routerLinkActive="selected" [routerLinkActiveOptions]="{ exact: true }">
+        <span class="nav-icon dashboard-icon">⌂</span><span>Overview</span>
+      </a>
+      <a routerLink="/systems" routerLinkActive="selected">
+        <span class="nav-icon">◫</span><span>External systems</span><span class="nav-count">{{ systems.length }}</span>
+      </a>
+      <a routerLink="/connectors" routerLinkActive="selected">
+        <span class="nav-icon">⤳</span><span>Connectors</span><span class="nav-count">{{ connectors.length }}</span>
+      </a>
+      <a routerLink="/workflows" routerLinkActive="selected">
+        <span class="nav-icon">⤴</span><span>Workflows</span><span class="nav-count">{{ workflows.length }}</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="api-indicator"><span class="pulse-dot" [class.offline-dot]="connectionState === 'offline'"></span>
+        <span><strong>{{ connectionState === 'connecting' ? 'Connecting to API' : connectionState === 'offline' ? 'API unavailable' : 'API connected' }}</strong><small>{{ connectionState === 'offline' ? 'Check local services' : connectionState === 'connecting' ? 'Checking services…' : 'Local API responding' }}</small></span>
+      </div>
+      <div class="user-chip"><span class="avatar">A</span><span><strong>Administrator</strong><small>Workspace owner</small></span><span class="user-menu">···</span></div>
+    </div>
+  </aside>
+
+  <main class="main-area">
+    <header class="topbar">
+      <div class="breadcrumb"><span>Workspace</span><span class="crumb-separator">/</span><strong>{{ pageTitle }}</strong></div>
+      <div class="topbar-actions">
+        <span class="environment-chip"><span class="environment-dot"></span> Development</span>
+        <button class="icon-button" type="button" title="Refresh data" aria-label="Refresh data" (click)="refresh()">↻</button>
+        <button class="avatar top-avatar" type="button" aria-label="Administrator profile">A</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+      @if (apiError && !modal) {
+        <div class="alert alert-error" role="alert"><span class="alert-symbol">!</span><span>{{ apiError }}</span><button type="button" (click)="refresh()">Retry</button><button class="alert-close" type="button" aria-label="Dismiss" (click)="apiError = ''">×</button></div>
+      }
+
+      @if (section === 'dashboard') {
+        <section class="page-heading dashboard-heading">
+          <div><div class="eyebrow">{{ todayLabel }}</div><h1>Good morning, Admin <span class="wave">✳</span></h1><p>Here’s what’s happening across your integration landscape.</p></div>
+          <button class="button button-primary" type="button" (click)="openCreate('workflow')"><span class="button-plus">＋</span> New workflow</button>
+        </section>
+
+        @if (loading) { <div class="loading-line"><span></span>Loading your workspace…</div> }
+
+        <section class="metrics-grid" aria-label="Workspace summary">
+          <article class="metric-card"><div class="metric-top"><span class="metric-label">External systems</span><span class="metric-icon icon-violet">◫</span></div><div class="metric-value">{{ systems.length }}</div><div class="metric-foot"><span class="mini-dot green"></span>{{ activeSystems }} active <span class="metric-muted">across environments</span></div></article>
+          <article class="metric-card"><div class="metric-top"><span class="metric-label">Connectors</span><span class="metric-icon icon-blue">⤳</span></div><div class="metric-value">{{ connectors.length }}</div><div class="metric-foot"><span class="mini-dot green"></span>{{ activeConnectors }} active <span class="metric-muted">ready to exchange data</span></div></article>
+          <article class="metric-card"><div class="metric-top"><span class="metric-label">Workflows</span><span class="metric-icon icon-orange">⤴</span></div><div class="metric-value">{{ workflows.length }}</div><div class="metric-foot"><span class="mini-dot green"></span>{{ activeWorkflows }} active <span class="metric-muted">routing workflows</span></div></article>
+          <article class="metric-card metric-card-accent"><div class="metric-top"><span class="metric-label">Platform status</span><span class="metric-icon icon-green">⌁</span></div><div class="metric-value status-value"><span class="health-pulse"></span>Operational</div><div class="metric-foot"><span class="metric-muted">Core services responding normally</span></div></article>
+        </section>
+
+        <section class="dashboard-grid">
+          <article class="panel resource-panel">
+            <div class="panel-heading"><div><h2>Integration landscape</h2><p>Your systems and how they connect</p></div><a routerLink="/systems" class="text-link">View all <span>→</span></a></div>
+            @if (systems.length === 0 && !loading) {
+              <div class="empty-state compact-empty"><div class="empty-art">◫</div><strong>No systems registered yet</strong><span>Add an external system to start connecting your services.</span><button type="button" class="button button-secondary" (click)="openCreate('system')">Add external system</button></div>
+            } @else {
+              <div class="landscape-list">
+                @for (system of systems.slice(0, 4); track system.id) {
+                  <div class="landscape-row"><span class="system-monogram">{{ system.name.slice(0, 1).toUpperCase() }}</span><div class="landscape-info"><strong>{{ system.name }}</strong><span>{{ environmentLabel(system.environment) }} · {{ connectorCount(system.id) }} connectors</span></div><span class="status-pill" [ngClass]="statusClass(statusLabel('system', system.status))"><i></i>{{ statusLabel('system', system.status) }}</span></div>
+                }
+              </div>
+            }
+          </article>
+
+          <article class="panel quick-panel">
+            <div class="panel-heading"><div><h2>Quick actions</h2><p>Common tasks, one click away</p></div></div>
+            <button class="quick-action" type="button" (click)="openCreate('system')"><span class="quick-icon quick-violet">＋</span><span><strong>Register a system</strong><small>Connect a new external service</small></span><span class="quick-arrow">→</span></button>
+            <button class="quick-action" type="button" (click)="openCreate('connector')"><span class="quick-icon quick-blue">⤳</span><span><strong>Create a connector</strong><small>Configure an integration endpoint</small></span><span class="quick-arrow">→</span></button>
+            <button class="quick-action" type="button" (click)="openCreate('workflow')"><span class="quick-icon quick-orange">⤴</span><span><strong>Design a workflow</strong><small>Route events between connectors</small></span><span class="quick-arrow">→</span></button>
+          </article>
+        </section>
+
+        <section class="panel workflow-panel">
+          <div class="panel-heading"><div><h2>Recent workflows</h2><p>Workflow configuration and current state</p></div><a routerLink="/workflows" class="text-link">All workflows <span>→</span></a></div>
+          @if (workflows.length === 0 && !loading) {
+            <div class="empty-state compact-empty"><div class="empty-art">⤴</div><strong>Your workflows will appear here</strong><span>Create your first workflow to define how events move between connectors.</span><button type="button" class="button button-secondary" (click)="openCreate('workflow')">Create workflow</button></div>
+          } @else {
+            <div class="table-scroll"><table><thead><tr><th>WORKFLOW</th><th>SOURCE</th><th>TRIGGER EVENT</th><th>STEPS</th><th>STATUS</th><th></th></tr></thead><tbody>
+              @for (workflow of workflows.slice(0, 5); track workflow.id) {
+                <tr><td><span class="workflow-symbol">⤴</span><strong>{{ workflow.name }}</strong></td><td>{{ connectorName(workflow.sourceConnectorId) }}</td><td><span class="event-tag">{{ workflow.triggerEvent }}</span></td><td>{{ workflow.stepCount }} {{ workflow.stepCount === 1 ? 'step' : 'steps' }}</td><td><span class="status-pill" [ngClass]="statusClass(statusLabel('workflow', workflow.status))"><i></i>{{ statusLabel('workflow', workflow.status) }}</span></td><td><button class="row-more" type="button" aria-label="Edit workflow" (click)="editWorkflow(workflow)">···</button></td></tr>
+              }
+            </tbody></table></div>
+          }
+        </section>
+      }
+
+      @if (section === 'systems') {
+        <section class="page-heading"><div><div class="eyebrow">INTEGRATION CATALOG</div><h1>External systems</h1><p>Register and manage the services your organization connects to.</p></div><button class="button button-primary" type="button" (click)="openCreate('system')"><span class="button-plus">＋</span> Add system</button></section>
+        <section class="panel management-panel"><div class="list-toolbar"><div class="list-count"><strong>{{ systems.length }}</strong> registered {{ systems.length === 1 ? 'system' : 'systems' }}</div><label class="search-box"><span>⌕</span><input type="search" [(ngModel)]="search" placeholder="Search systems…" aria-label="Search external systems"></label></div>
+          @if (loading) { <div class="loading-line"><span></span>Loading systems…</div> }
+          @else if (filteredSystems.length === 0) { <div class="empty-state"><div class="empty-art">◫</div><strong>{{ search ? 'No systems match your search' : 'No external systems yet' }}</strong><span>{{ search ? 'Try another name or environment.' : 'Register a system to make it available for connectors.' }}</span>@if (!search) { <button class="button button-secondary" type="button" (click)="openCreate('system')">Register a system</button> }</div> }
+          @else { <div class="table-scroll"><table><thead><tr><th>SYSTEM</th><th>ENVIRONMENT</th><th>CONNECTORS</th><th>STATUS</th><th>DESCRIPTION</th><th></th></tr></thead><tbody>
+            @for (system of filteredSystems; track system.id) {
+              <tr><td><span class="system-monogram table-monogram">{{ system.name.slice(0, 1).toUpperCase() }}</span><strong>{{ system.name }}</strong></td><td><span class="environment-label"><span class="tiny-square"></span>{{ environmentLabel(system.environment) }}</span></td><td>{{ connectorCount(system.id) }}</td><td><span class="status-pill" [ngClass]="statusClass(statusLabel('system', system.status))"><i></i>{{ statusLabel('system', system.status) }}</span></td><td class="description-cell">{{ system.description }}</td><td><div class="row-actions"><button type="button" class="action-link" (click)="editSystem(system)">Edit</button><button type="button" class="action-link" (click)="toggleSystem(system)">{{ system.status === 1 ? 'Deactivate' : 'Activate' }}</button></div></td></tr>
+            }
+          </tbody></table></div> }
+        </section>
+      }
+
+      @if (section === 'connectors') {
+        <section class="page-heading"><div><div class="eyebrow">ENDPOINT CATALOG</div><h1>Connectors</h1><p>Configure secure endpoints between your systems and integration flows.</p></div><button class="button button-primary" type="button" (click)="openCreate('connector')"><span class="button-plus">＋</span> New connector</button></section>
+        <section class="panel management-panel"><div class="list-toolbar"><div class="list-count"><strong>{{ connectors.length }}</strong> configured {{ connectors.length === 1 ? 'connector' : 'connectors' }}</div><label class="search-box"><span>⌕</span><input type="search" [(ngModel)]="search" placeholder="Search connectors…" aria-label="Search connectors"></label></div>
+          @if (loading) { <div class="loading-line"><span></span>Loading connectors…</div> }
+          @else if (filteredConnectors.length === 0) { <div class="empty-state"><div class="empty-art">⤳</div><strong>{{ search ? 'No connectors match your search' : 'No connectors configured' }}</strong><span>{{ search ? 'Try another name, URL, or system.' : 'Create a connector to configure an endpoint for an active system.' }}</span>@if (!search) { <button class="button button-secondary" type="button" [disabled]="activeSystemOptions.length === 0" (click)="openCreate('connector')">Create a connector</button>@if (activeSystemOptions.length === 0) { <small class="helper-text">Register and activate an external system first.</small> } }</div> }
+          @else { <div class="table-scroll"><table><thead><tr><th>CONNECTOR</th><th>EXTERNAL SYSTEM</th><th>PROTOCOL</th><th>AUTHENTICATION</th><th>STATUS</th><th></th></tr></thead><tbody>
+            @for (connector of filteredConnectors; track connector.id) {
+              <tr><td><div class="connector-cell"><span class="connector-mark">↗</span><span><strong>{{ connector.name }}</strong><small>{{ connector.baseUrl }}</small></span></div></td><td>{{ systemName(connector.externalSystemId) }}</td><td><span class="protocol-tag">{{ protocolLabel(connector.protocol) }}</span></td><td>{{ authenticationLabel(connector.authenticationType) }}</td><td><span class="status-pill" [ngClass]="statusClass(statusLabel('connector', connector.status))"><i></i>{{ statusLabel('connector', connector.status) }}</span></td><td><div class="row-actions"><button type="button" class="action-link" (click)="editConnector(connector)">Edit</button>@if (connector.status === 1 || connector.status === 2) { <button type="button" class="action-link" (click)="toggleConnector(connector)">{{ connector.status === 2 ? 'Deactivate' : 'Activate' }}</button> }</div></td></tr>
+            }
+          </tbody></table></div> }
+        </section>
+      }
+
+      @if (section === 'workflows') {
+        <section class="page-heading"><div><div class="eyebrow">EVENT ROUTING</div><h1>Workflows</h1><p>Define how events flow from source connectors to their destinations.</p></div><button class="button button-primary" type="button" [disabled]="activeConnectorOptions.length < 2" (click)="openCreate('workflow')"><span class="button-plus">＋</span> New workflow</button></section>
+        <section class="panel management-panel"><div class="list-toolbar"><div class="list-count"><strong>{{ workflows.length }}</strong> defined {{ workflows.length === 1 ? 'workflow' : 'workflows' }}</div><label class="search-box"><span>⌕</span><input type="search" [(ngModel)]="search" placeholder="Search workflows…" aria-label="Search workflows"></label></div>
+          @if (loading) { <div class="loading-line"><span></span>Loading workflows…</div> }
+          @else if (filteredWorkflows.length === 0) { <div class="empty-state"><div class="empty-art">⤴</div><strong>{{ search ? 'No workflows match your search' : 'No workflows defined' }}</strong><span>{{ search ? 'Try another workflow name or trigger.' : 'Build a workflow to route events between active connectors.' }}</span>@if (!search) { <button class="button button-secondary" type="button" [disabled]="activeConnectorOptions.length < 2" (click)="openCreate('workflow')">Create a workflow</button>@if (activeConnectorOptions.length < 2) { <small class="helper-text">You need at least two active connectors.</small> } }</div> }
+          @else { <div class="table-scroll"><table><thead><tr><th>WORKFLOW</th><th>SOURCE CONNECTOR</th><th>TRIGGER EVENT</th><th>DESTINATIONS</th><th>STATUS</th><th></th></tr></thead><tbody>
+            @for (workflow of filteredWorkflows; track workflow.id) {
+              <tr><td><span class="workflow-symbol">⤴</span><strong>{{ workflow.name }}</strong></td><td>{{ connectorName(workflow.sourceConnectorId) }}</td><td><span class="event-tag">{{ workflow.triggerEvent }}</span></td><td>{{ workflow.stepCount }} {{ workflow.stepCount === 1 ? 'destination' : 'destinations' }}</td><td><span class="status-pill" [ngClass]="statusClass(statusLabel('workflow', workflow.status))"><i></i>{{ statusLabel('workflow', workflow.status) }}</span></td><td><div class="row-actions">@if (workflow.status === 0) { <button type="button" class="action-link" (click)="editWorkflow(workflow)">Edit</button><button type="button" class="action-link action-primary" (click)="activateWorkflow(workflow)">Activate</button> }</div></td></tr>
+            }
+          </tbody></table></div> }
+        </section>
+      }
+    </div>
+
+    <footer class="page-footer"><span>© 2026 Nexus Integration Hub</span><span>Built for connected operations <i>✳</i></span></footer>
+  </main>
+
+  <router-outlet></router-outlet>
+
+  @if (notice) { <div class="toast" role="status"><span>✓</span>{{ notice }}</div> }
+
+  @if (modal) {
+    <div class="modal-backdrop" (click)="closeModal()" (keydown.escape)="closeModal()">
+      <section class="modal-card" role="dialog" aria-modal="true" [attr.aria-labelledby]="'modal-title'" (click)="$event.stopPropagation()">
+        <div class="modal-heading"><div><div class="eyebrow">{{ editingId ? 'UPDATE CONFIGURATION' : 'NEW CONFIGURATION' }}</div><h2 id="modal-title">@if (modal === 'system') { {{ editingId ? 'Edit external system' : 'Register a system' }} } @else if (modal === 'connector') { {{ editingId ? 'Edit connector' : 'Create a connector' }} } @else { {{ editingId ? 'Edit workflow' : 'Create a workflow' }} }</h2></div><button type="button" class="modal-close" aria-label="Close dialog" (click)="closeModal()">×</button></div>
+        @if (apiError) { <div class="alert alert-error modal-alert" role="alert"><span class="alert-symbol">!</span><span>{{ apiError }}</span></div> }
+
+        @if (modal === 'system') {
+          <form (ngSubmit)="saveSystem()" #systemNgForm="ngForm">
+            <label class="field-label">System name <span>*</span><input name="systemName" [(ngModel)]="systemForm.name" required maxlength="200" placeholder="e.g. Salesforce CRM"></label>
+            <label class="field-label">Description <span>*</span><textarea name="systemDescription" [(ngModel)]="systemForm.description" required maxlength="1000" rows="3" placeholder="What does this system do?"></textarea></label>
+            <label class="field-label">Environment <span>*</span><select name="systemEnvironment" [(ngModel)]="systemForm.environment" required>@for (environment of environments; track environment.value) { <option [ngValue]="environment.value">{{ environment.label }}</option> }</select></label>
+            <div class="form-hint"><span>ⓘ</span> A system name must be unique within its environment.</div>
+            <div class="modal-actions"><button type="button" class="button button-quiet" (click)="closeModal()">Cancel</button><button class="button button-primary" type="submit" [disabled]="systemNgForm.invalid || saving">{{ saving ? 'Saving…' : editingId ? 'Save changes' : 'Register system' }}</button></div>
+          </form>
+        }
+
+        @if (modal === 'connector') {
+          <form (ngSubmit)="saveConnector()" #connectorNgForm="ngForm">
+            @if (!editingId) { <label class="field-label">External system <span>*</span><select name="externalSystem" [(ngModel)]="connectorForm.externalSystemId" required><option value="" disabled>Select a system</option>@for (system of activeSystemOptions; track system.id) { <option [ngValue]="system.id">{{ system.name }} · {{ environmentLabel(system.environment) }}</option> }</select></label> }
+            <label class="field-label">Connector name <span>*</span><input name="connectorName" [(ngModel)]="connectorForm.name" required maxlength="200" placeholder="e.g. Orders REST API"></label>
+            <label class="field-label">Description <span>*</span><textarea name="connectorDescription" [(ngModel)]="connectorForm.description" required maxlength="1000" rows="2" placeholder="Describe this endpoint"></textarea></label>
+            <label class="field-label">Base URL <span>*</span><input name="baseUrl" [(ngModel)]="connectorForm.baseUrl" required type="url" maxlength="200" placeholder="https://api.example.com"></label>
+            <div class="form-row"><label class="field-label">Protocol <select name="protocol" [(ngModel)]="connectorForm.protocol">@for (protocol of protocols; track protocol.value) { <option [ngValue]="protocol.value">{{ protocol.label }}</option> }</select></label><label class="field-label">Authentication <select name="authentication" [(ngModel)]="connectorForm.authenticationType">@for (auth of authenticationTypes; track auth.value) { <option [ngValue]="auth.value">{{ auth.label }}</option> }</select></label></div>
+            <label class="field-label">Timeout <span class="field-suffix">seconds</span><input name="timeout" [(ngModel)]="connectorForm.timeoutSeconds" required type="number" min="1" max="3600"></label>
+            <div class="form-hint"><span>ⓘ</span> New connectors start in Draft and must be activated before use.</div>
+            <div class="modal-actions"><button type="button" class="button button-quiet" (click)="closeModal()">Cancel</button><button class="button button-primary" type="submit" [disabled]="connectorNgForm.invalid || saving || (!editingId && activeSystemOptions.length === 0)">{{ saving ? 'Saving…' : editingId ? 'Save changes' : 'Create connector' }}</button></div>
+          </form>
+        }
+
+        @if (modal === 'workflow') {
+          <form (ngSubmit)="saveWorkflow()" #workflowNgForm="ngForm">
+            <label class="field-label">Workflow name <span>*</span><input name="workflowName" [(ngModel)]="workflowForm.name" required maxlength="200" placeholder="e.g. Route new orders"></label>
+            <label class="field-label">Trigger event <span>*</span><input name="triggerEvent" [(ngModel)]="workflowForm.triggerEvent" required maxlength="200" placeholder="e.g. OrderCreated"></label>
+            <label class="field-label">Source connector <span>*</span><select name="sourceConnector" [(ngModel)]="workflowForm.sourceConnectorId" required><option value="" disabled>Select a source</option>@for (connector of activeConnectorOptions; track connector.id) { <option [ngValue]="connector.id">{{ connector.name }} · {{ systemName(connector.externalSystemId) }}</option> }</select></label>
+            <div class="steps-label"><span>Destination steps <b>*</b></span><button type="button" class="text-link" (click)="addWorkflowStep()">＋ Add destination</button></div>
+            @for (step of workflowForm.steps; track trackByIndex($index); let index = $index) {
+              <div class="step-row"><span class="step-number">{{ index + 1 }}</span><select [name]="'destination-' + index" [(ngModel)]="step.destinationConnectorId" required><option value="" disabled>Select a destination connector</option>@for (connector of activeConnectorOptions; track connector.id) { @if (connector.id !== workflowForm.sourceConnectorId) { <option [ngValue]="connector.id">{{ connector.name }} · {{ systemName(connector.externalSystemId) }}</option> } }</select><button type="button" class="step-remove" aria-label="Remove destination" [disabled]="workflowForm.steps.length === 1" (click)="removeWorkflowStep(index)">×</button></div>
+            }
+            <div class="form-hint"><span>ⓘ</span> Workflows are created as Draft. Activate when the route is ready.</div>
+            <div class="modal-actions"><button type="button" class="button button-quiet" (click)="closeModal()">Cancel</button><button class="button button-primary" type="submit" [disabled]="workflowNgForm.invalid || saving || activeConnectorOptions.length < 2">{{ saving ? 'Saving…' : editingId ? 'Save changes' : 'Create workflow' }}</button></div>
+          </form>
+        }
+      </section>
+    </div>
+  }
+</div>
