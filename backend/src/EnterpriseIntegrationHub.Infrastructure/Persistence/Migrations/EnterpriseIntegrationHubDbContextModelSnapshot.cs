@@ -55,6 +55,12 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.Property<int>("Protocol")
                         .HasColumnType("int");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -97,6 +103,12 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(200)")
                         .UseCollation("SQL_Latin1_General_CP1_CI_AS");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -117,6 +129,9 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("ConfigurationRevision")
+                        .HasColumnType("int");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -125,6 +140,12 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)")
                         .UseCollation("SQL_Latin1_General_CP1_CI_AS");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<Guid>("SourceConnectorId")
                         .HasColumnType("uniqueidentifier");

@@ -8,6 +8,7 @@ public sealed record WorkflowDetailsResponseModel(
     Guid SourceConnectorId,
     string TriggerEvent,
     WorkflowStatus Status,
+    int ConfigurationRevision,
     IReadOnlyCollection<WorkflowStepResponseModel> Steps);
 
 public sealed record WorkflowStepResponseModel(Guid DestinationConnectorId, int ExecutionOrder);

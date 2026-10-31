@@ -16,6 +16,8 @@ public sealed class WorkflowConfiguration : IEntityTypeConfiguration<Workflow>
         builder.Property(x => x.Status).IsRequired().HasConversion<int>();
         builder.Property(x => x.CreatedAt).IsRequired();
         builder.Property(x => x.UpdatedAt).IsRequired(false);
+        builder.Property(x => x.ConfigurationRevision).IsRequired();
+        builder.Property(x => x.RowVersion).IsRowVersion();
         builder.HasIndex(x => x.Name).IsUnique().HasDatabaseName("IX_Workflows_Name");
         builder.HasOne<Connector>().WithMany().HasForeignKey(x => x.SourceConnectorId).OnDelete(DeleteBehavior.Restrict);
         builder.HasMany(x => x.Steps).WithOne().HasForeignKey(x => x.WorkflowId);

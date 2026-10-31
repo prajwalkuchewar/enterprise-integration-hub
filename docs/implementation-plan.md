@@ -1,6 +1,6 @@
 # Implementation Plan — From Configuration to Reliable Execution
 
-**Status:** Proposed. This plan is not a claim that the runtime exists.
+**Status:** Milestone 1 complete; later runtime milestones remain planned. This plan is not a claim that the runtime exists.
 
 ## Milestone 0 — Baseline and quality
 
@@ -14,14 +14,14 @@
 ## Milestone 1 — Configuration hardening
 
 1. [x] Move essential connector/external-system invariants into domain behavior; reject empty IDs and invalid enum values at the boundary.
-2. [ ] Block connector deactivation when an active workflow references it; return a clear conflict.
-3. [ ] Decide equivalent external-system dependency behavior.
-4. [ ] Add centralized exception handling with a stable ProblemDetails contract.
-5. [ ] Add API-host lifecycle tests and SQL Server relational integration tests.
-6. [ ] Add optimistic concurrency and map conflicts to 409.
-7. [ ] Define immutable workflow publication/versioning.
+2. [x] Block connector deactivation when an active workflow references it; return a clear conflict.
+3. [x] Block external-system deactivation when active connectors or workflows depend on it.
+4. [x] Add centralized exception handling with a stable ProblemDetails contract.
+5. [x] Add API-host lifecycle tests and SQL Server relational integration tests.
+6. [x] Add SQL Server rowversion optimistic concurrency for configuration records and map stale updates to 409.
+7. [x] Define workflow revision semantics: revisions begin at 1, increment only for changed Draft configuration, and the activated revision is immutable. Runtime executions will persist the exact revision they use.
 
-**Exit:** configuration is safe and versioned enough to become runtime input.
+**Exit:** met. Configuration writes have relational constraints, lifecycle rules, request validation, conflict handling, integration coverage, and persisted concurrency tokens. Workflow API responses expose the current configuration revision. Execution persistence and revision snapshots remain part of Milestone 3.
 
 ## Milestone 2 — Runtime and security design
 

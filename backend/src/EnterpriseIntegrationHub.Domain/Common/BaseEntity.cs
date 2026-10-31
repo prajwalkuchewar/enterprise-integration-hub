@@ -13,4 +13,6 @@ public abstract class BaseEntity
     public DateTimeOffset CreatedAt { get; private init; }
 
     public DateTimeOffset? UpdatedAt { get; protected set; }
+
+    public byte[] RowVersion { get; private set; } = [];
 }
