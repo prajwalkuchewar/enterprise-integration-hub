@@ -150,6 +150,6 @@ Durable immutable history makes event handling auditable, makes retry behavior e
 
 Status
 
-Accepted in PR #65; implementation is pending.
+Accepted in PR #65; execution persistence is implemented on the dependent #50 branch. Worker execution remains future work.
 
 ---

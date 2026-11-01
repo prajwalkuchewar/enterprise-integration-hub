@@ -36,6 +36,8 @@ Integration Administrator
 - A destination connector cannot be the same as the source connector.
 - Only Draft workflows can be updated or activated.
 - Activation requires the source connector and every destination connector to be active.
+- Activation persists an immutable `WorkflowRevision` snapshot of the current workflow configuration and ordered destinations.
+- A changed Draft update advances `ConfigurationRevision`; an activated revision cannot be edited.
 
 ---
 

@@ -23,12 +23,18 @@ public sealed class WorkflowRepository(EnterpriseIntegrationHubDbContext context
     public async Task UpdateAsync(Workflow workflow, CancellationToken cancellationToken)
     {
         context.Workflows.Update(workflow);
+        if (workflow.Status == WorkflowStatus.Active)
+            context.WorkflowRevisions.Add(new WorkflowRevision(workflow));
         try { await context.SaveChangesAsync(cancellationToken); }
         catch (DbUpdateConcurrencyException exception)
         {
-            throw new InvalidOperationException("The workflow changed after it was loaded. Reload it and retry the update.", exception);
+            throw new InvalidOperationException("The workflow changed after it was loaded. Reload it and retry.", exception);
         }
     }
+
+    public Task<WorkflowRevision?> GetRevisionByIdAsync(Guid revisionId, CancellationToken cancellationToken) =>
+        context.WorkflowRevisions.AsNoTracking().Include(revision => revision.Steps)
+            .FirstOrDefaultAsync(revision => revision.Id == revisionId, cancellationToken);
 
     public async Task<IReadOnlyCollection<Workflow>> GetAllAsync(CancellationToken cancellationToken) =>
         await context.Workflows
@@ -37,11 +43,13 @@ public sealed class WorkflowRepository(EnterpriseIntegrationHubDbContext context
             .OrderBy(x => x.Name)
             .ToListAsync(cancellationToken);
 
-    public async Task<IReadOnlyCollection<Workflow>> GetActiveForSourceConnectorAsync(Guid sourceConnectorId, CancellationToken cancellationToken) =>
-        await context.Workflows
+    public async Task<IReadOnlyCollection<WorkflowRevision>> GetActiveRevisionsForSourceConnectorAsync(Guid sourceConnectorId, CancellationToken cancellationToken) =>
+        await context.WorkflowRevisions
             .AsNoTracking()
-            .Where(workflow => workflow.Status == WorkflowStatus.Active && workflow.SourceConnectorId == sourceConnectorId)
-            .Include(workflow => workflow.Steps)
+            .Where(revision => revision.SourceConnectorId == sourceConnectorId &&
+                context.Workflows.Any(workflow => workflow.Id == revision.WorkflowId && workflow.Status == WorkflowStatus.Active &&
+                    workflow.ConfigurationRevision == revision.RevisionNumber))
+            .Include(revision => revision.Steps)
             .ToListAsync(cancellationToken);
 
     public Task<bool> HasActiveWorkflowForConnectorAsync(Guid connectorId, CancellationToken cancellationToken) =>

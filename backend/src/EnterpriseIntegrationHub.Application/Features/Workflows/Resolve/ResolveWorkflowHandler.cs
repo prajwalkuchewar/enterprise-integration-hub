@@ -1,4 +1,5 @@
 using EnterpriseIntegrationHub.Application.Interfaces;
+using EnterpriseIntegrationHub.Domain.Entities;
 using EnterpriseIntegrationHub.Domain.Enums;
 
 namespace EnterpriseIntegrationHub.Application.Features.Workflows.Resolve;
@@ -13,7 +14,7 @@ public sealed class ResolveWorkflowHandler(IWorkflowRepository workflowRepositor
             throw new ArgumentException("TriggerEvent is required.", nameof(query.TriggerEvent));
 
         var eventType = query.TriggerEvent.Trim();
-        var candidates = await workflowRepository.GetActiveForSourceConnectorAsync(query.SourceConnectorId, cancellationToken);
+        var candidates = await workflowRepository.GetActiveRevisionsForSourceConnectorAsync(query.SourceConnectorId, cancellationToken);
         var matches = candidates
             .Where(workflow => string.Equals(workflow.TriggerEvent.Trim(), eventType, StringComparison.OrdinalIgnoreCase))
             .ToArray();
@@ -23,27 +24,38 @@ public sealed class ResolveWorkflowHandler(IWorkflowRepository workflowRepositor
         if (matches.Length > 1)
             throw new InvalidOperationException($"More than one active workflow matches trigger event '{eventType}' for source connector {query.SourceConnectorId}.");
 
-        var workflow = matches[0];
-        await EnsureActiveConnector(workflow.SourceConnectorId, "Source", cancellationToken);
-        foreach (var step in workflow.Steps)
-            await EnsureActiveConnector(step.DestinationConnectorId, "Destination", cancellationToken);
+        var revision = matches[0];
+        await EnsureActiveConnector(revision.SourceConnectorId, "Source", cancellationToken);
+        var resolvedSteps = new List<ResolvedWorkflowStep>();
+        foreach (var step in revision.Steps.OrderBy(step => step.ExecutionOrder))
+        {
+            var connector = await EnsureActiveConnector(step.DestinationConnectorId, "Destination", cancellationToken);
+            resolvedSteps.Add(new ResolvedWorkflowStep(
+                step.Id,
+                connector.Id,
+                connector.BaseUrl,
+                connector.Protocol,
+                connector.AuthenticationType,
+                connector.TimeoutSeconds,
+                step.ExecutionOrder));
+        }
 
         return new ResolvedWorkflowConfiguration(
-            workflow.Id,
-            workflow.ConfigurationRevision,
-            workflow.SourceConnectorId,
-            workflow.TriggerEvent,
-            workflow.Steps
-                .OrderBy(step => step.ExecutionOrder)
-                .Select(step => new ResolvedWorkflowStep(step.DestinationConnectorId, step.ExecutionOrder))
-                .ToArray());
+            revision.Id,
+            revision.WorkflowId,
+            revision.RevisionNumber,
+            revision.Name,
+            revision.SourceConnectorId,
+            revision.TriggerEvent,
+            resolvedSteps);
     }
 
-    private async Task EnsureActiveConnector(Guid connectorId, string role, CancellationToken cancellationToken)
+    private async Task<Connector> EnsureActiveConnector(Guid connectorId, string role, CancellationToken cancellationToken)
     {
         var connector = await connectorRepository.GetByIdAsync(connectorId, cancellationToken)
             ?? throw new KeyNotFoundException($"{role} connector with ID {connectorId} was not found.");
         if (connector.Status != ConnectorStatus.Active)
             throw new InvalidOperationException($"The matching workflow cannot be resolved because its {role.ToLowerInvariant()} connector {connectorId} is not active.");
+        return connector;
     }
 }

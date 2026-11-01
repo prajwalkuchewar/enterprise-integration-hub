@@ -1,6 +1,6 @@
 # Runtime Execution Domain Decisions
 
-**Status:** Accepted design baseline for completed issue [#49](https://github.com/prajwalkuchewar/enterprise-integration-hub/issues/49), merged in PR #65. Runtime execution models are still pending.
+**Status:** Accepted design baseline for completed issue [#49](https://github.com/prajwalkuchewar/enterprise-integration-hub/issues/49), merged in PR #65. Execution persistence is being delivered in the dependent #50 branch; workers remain future work.
 
 ## Purpose and boundary
 
