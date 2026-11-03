@@ -14,7 +14,7 @@ services:
       - eih-infra
 
   eih-kafka:
-    image: redpanda/redpanda:latest
+    image: docker.redpanda.com/redpandadata/redpanda:latest
     container_name: eih-kafka
     profiles:
       - kafka # <-- add this so Kafka is not started by default
@@ -30,13 +30,13 @@ services:
       - '0M'
       - --node-id
       - '0'
-      - --check
-      - 'false'
+      - --check=false
       - --kafka-addr
-      - PLAINTEXT://0.0.0.0:9092
+      - 0.0.0.0:9092
+      - --advertise-kafka-addr
+      - localhost:9092
     ports:
       - '9092:9092'
-      - '29092:29092'
     volumes:
       - redpanda_data:/var/lib/redpanda
     restart: unless-stopped
