@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 
 namespace EnterpriseIntegrationHub.Api.Delivery;
 
-public sealed class DestinationNetworkPolicy
+internal sealed class DestinationNetworkPolicy
 {
     private readonly DestinationHttpOptions _options;
     private readonly Uri[] _origins;

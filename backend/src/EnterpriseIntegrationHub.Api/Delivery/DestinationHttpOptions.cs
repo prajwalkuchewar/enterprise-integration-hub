@@ -1,6 +1,6 @@
 namespace EnterpriseIntegrationHub.Api.Delivery;
 
-public sealed class DestinationHttpOptions
+internal sealed class DestinationHttpOptions
 {
     public const string SectionName = "DestinationHttp";
     public string[] AllowedOrigins { get; set; } = [];
