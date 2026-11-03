@@ -46,6 +46,10 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ExternalSystemId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("IngestionKeyHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -73,6 +77,11 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ExternalSystemId");
+
+                    b.HasIndex("IngestionKeyHash")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Connectors_IngestionKeyHash")
+                        .HasFilter("[IngestionKeyHash] IS NOT NULL");
 
                     b.HasIndex("Name", "ExternalSystemId")
                         .IsUnique()

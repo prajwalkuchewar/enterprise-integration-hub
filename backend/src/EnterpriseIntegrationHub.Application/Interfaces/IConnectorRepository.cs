@@ -16,5 +16,7 @@ namespace EnterpriseIntegrationHub.Application.Interfaces
         Task UpdateAsync(Connector connector, CancellationToken cancellationToken);
 
         Task<bool> HasActiveConnectorForExternalSystemAsync(Guid externalSystemId, CancellationToken cancellationToken);
+
+        Task<Connector?> GetByIngestionKeyHashAsync(string keyHash, CancellationToken cancellationToken);
     }
 }

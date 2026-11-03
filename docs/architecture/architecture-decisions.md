@@ -153,3 +153,21 @@ Status
 Accepted in PR #65; execution persistence is implemented on the dependent #50 branch. Worker execution remains future work.
 
 ---
+
+## ADR-006
+
+### Decision
+
+Authenticate inbound events with a per-connector ingestion key sent in the `X-Ingestion-Key` header. Store only its SHA-256 hash on the connector. Return the plaintext key once when issued, and invalidate the previous key when a new one is issued. Define the event fingerprint as SHA-256 over canonical JSON of the event type, UTC occurrence time, schema version, and payload with object keys sorted.
+
+### Reason
+
+A stored hash means a database leak does not expose working credentials. Per-connector keys let a source be revoked without affecting others. Canonical fingerprints make duplicate detection independent of property order and whitespace, while still treating changed content under the same event ID as a conflict.
+
+Limits: numeric formatting such as `1.0` versus `1` is significant because the raw value is hashed. Array order is significant.
+
+Status
+
+Accepted. Source mismatch and invalid keys both return 401. Whether mismatch should be 403 is still open.
+
+---

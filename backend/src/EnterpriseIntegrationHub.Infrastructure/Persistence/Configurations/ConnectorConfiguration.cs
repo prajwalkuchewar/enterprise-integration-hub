@@ -54,10 +54,19 @@ public sealed class ConnectorConfiguration : IEntityTypeConfiguration<Connector>
         builder.Property(x => x.UpdatedAt)
             .IsRequired(false);
 
+        builder.Property(x => x.IngestionKeyHash)
+            .HasMaxLength(64)
+            .IsRequired(false);
+
         builder.Property(x => x.RowVersion).IsRowVersion();
 
         builder.HasIndex(x => new { x.Name, x.ExternalSystemId })
             .IsUnique()
             .HasDatabaseName("IX_Connectors_Name_ExternalSystemId");
+
+        builder.HasIndex(x => x.IngestionKeyHash)
+            .IsUnique()
+            .HasFilter("[IngestionKeyHash] IS NOT NULL")
+            .HasDatabaseName("IX_Connectors_IngestionKeyHash");
     }
 }
