@@ -38,7 +38,7 @@ public sealed class UpdateConnectorHandler
 
         // Apply updates via domain methods and ensure UpdatedAt is set once per request
         var basicInfoUpdated = connector.UpdateBasicInfo(command.Name, command.Description);
-        var communicationUpdated = connector.UpdateCommunication(command.BaseUrl, command.Protocol, command.AuthenticationType, command.TimeoutSeconds);
+        var communicationUpdated = connector.UpdateCommunication(command.BaseUrl, command.Protocol, command.AuthenticationType, command.TimeoutSeconds, command.HttpMethod);
 
         if (basicInfoUpdated || communicationUpdated)
         {

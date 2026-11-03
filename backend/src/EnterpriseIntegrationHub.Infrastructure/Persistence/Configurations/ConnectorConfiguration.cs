@@ -44,6 +44,10 @@ public sealed class ConnectorConfiguration : IEntityTypeConfiguration<Connector>
         builder.Property(x => x.TimeoutSeconds)
             .IsRequired();
 
+        builder.Property(x => x.HttpMethod)
+            .IsRequired()
+            .HasConversion<int>();
+
         builder.Property(x => x.Status)
             .IsRequired()
             .HasConversion<int>();

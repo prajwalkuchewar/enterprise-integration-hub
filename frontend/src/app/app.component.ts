@@ -7,7 +7,7 @@ import { filter } from 'rxjs';
 import { HubApiService } from './hub-api.service';
 import {
   authenticationLabel, authenticationTypes, Connector, ConnectorRequest, environments,
-  environmentLabel, ExternalSystem, ExternalSystemRequest, protocols, protocolLabel,
+  environmentLabel, ExternalSystem, ExternalSystemRequest, httpMethodLabel, httpMethods, protocols, protocolLabel,
   statusLabel, Workflow, WorkflowDetails, WorkflowRequest, WorkflowStep
 } from './models';
 
@@ -29,6 +29,8 @@ export class AppComponent implements OnInit, AfterViewChecked {
   readonly environments = environments;
   readonly protocols = protocols;
   readonly authenticationTypes = authenticationTypes;
+  readonly httpMethods = httpMethods;
+  readonly httpMethodLabel = httpMethodLabel;
   readonly environmentLabel = environmentLabel;
   readonly protocolLabel = protocolLabel;
   readonly authenticationLabel = authenticationLabel;
@@ -50,7 +52,7 @@ export class AppComponent implements OnInit, AfterViewChecked {
   systemForm: ExternalSystemRequest = { name: '', description: '', environment: 1 };
   connectorForm: ConnectorRequest = {
     name: '', description: '', externalSystemId: '', baseUrl: 'https://',
-    protocol: 1, authenticationType: 1, timeoutSeconds: 30
+    protocol: 1, authenticationType: 1, timeoutSeconds: 30, httpMethod: 1
   };
   workflowForm: WorkflowRequest = {
     name: '', sourceConnectorId: '', triggerEvent: '',
@@ -161,7 +163,7 @@ export class AppComponent implements OnInit, AfterViewChecked {
     if (kind === 'system') this.systemForm = { name: '', description: '', environment: 1 };
     if (kind === 'connector') this.connectorForm = {
       name: '', description: '', externalSystemId: this.activeSystemOptions[0]?.id ?? '',
-      baseUrl: 'https://', protocol: 1, authenticationType: 1, timeoutSeconds: 30
+      baseUrl: 'https://', protocol: 1, authenticationType: 1, timeoutSeconds: 30, httpMethod: 1
     };
     if (kind === 'workflow') this.workflowForm = {
       name: '', sourceConnectorId: this.activeConnectorOptions[0]?.id ?? '', triggerEvent: '',
@@ -183,7 +185,7 @@ export class AppComponent implements OnInit, AfterViewChecked {
     this.connectorForm = {
       name: connector.name, description: connector.description, externalSystemId: connector.externalSystemId,
       baseUrl: connector.baseUrl, protocol: connector.protocol,
-      authenticationType: connector.authenticationType, timeoutSeconds: connector.timeoutSeconds
+      authenticationType: connector.authenticationType, timeoutSeconds: connector.timeoutSeconds, httpMethod: connector.httpMethod
     };
   }
 

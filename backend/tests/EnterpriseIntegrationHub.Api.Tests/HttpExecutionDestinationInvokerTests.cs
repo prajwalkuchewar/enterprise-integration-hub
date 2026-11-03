@@ -163,6 +163,11 @@ public sealed class HttpExecutionDestinationInvokerTests
 
         var invalid = await invoker.InvokeAsync(Work(0, ConnectorAuthenticationType.APIKey, "ok") with { Protocol = ConnectorProtocol.SOAP }, default);
         invalid.Status.Should().Be(DestinationInvocationStatus.InvalidConfiguration);
+        var invalidMethod = await invoker.InvokeAsync(Work(0, ConnectorAuthenticationType.APIKey, "ok") with
+        {
+            HttpMethod = (ConnectorHttpMethod)99
+        }, default);
+        invalidMethod.Status.Should().Be(DestinationInvocationStatus.InvalidConfiguration);
         var noCredential = await invoker.InvokeAsync(Work(0, ConnectorAuthenticationType.APIKey, "ok") with
         {
             DestinationConnectorId = Guid.NewGuid()

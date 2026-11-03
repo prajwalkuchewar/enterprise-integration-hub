@@ -91,7 +91,8 @@ public sealed class ConnectorsController : ControllerBase
             request.BaseUrl,
             request.Protocol,
             request.AuthenticationType,
-            request.TimeoutSeconds);
+            request.TimeoutSeconds,
+            request.HttpMethod);
 
         var id = await _createHandler.Handle(command, cancellationToken);
         return Created($"/api/connectors/{id}", new { id });
@@ -119,7 +120,8 @@ public sealed class ConnectorsController : ControllerBase
             request.BaseUrl,
             request.Protocol,
             request.AuthenticationType,
-            request.TimeoutSeconds);
+            request.TimeoutSeconds,
+            request.HttpMethod);
 
         await _updateHandler.Handle(id, command, cancellationToken);
         return NoContent();

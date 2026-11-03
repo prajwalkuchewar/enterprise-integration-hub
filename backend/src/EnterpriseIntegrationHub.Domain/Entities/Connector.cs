@@ -18,15 +18,18 @@ namespace EnterpriseIntegrationHub.Domain.Entities
 
         public int TimeoutSeconds { get; private set; }
 
+        public ConnectorHttpMethod HttpMethod { get; private set; }
+
         public ConnectorStatus Status { get; private set; }
 
         /// <summary>SHA-256 hex digest of the connector's current ingestion key. The plaintext key is never stored.</summary>
         public string? IngestionKeyHash { get; private set; }
 
-        public Connector(string name, string description, Guid externalSystemId, string baseUrl, ConnectorProtocol protocol, ConnectorAuthenticationType authenticationType, int timeoutSeconds, ConnectorStatus status)
+        public Connector(string name, string description, Guid externalSystemId, string baseUrl, ConnectorProtocol protocol, ConnectorAuthenticationType authenticationType, int timeoutSeconds, ConnectorStatus status, ConnectorHttpMethod httpMethod = ConnectorHttpMethod.Post)
         {
             ValidateBasicInfo(name, description);
             ValidateCommunication(baseUrl, protocol, authenticationType, timeoutSeconds);
+            ValidateHttpMethod(httpMethod);
 
             if (externalSystemId == Guid.Empty)
                 throw new ArgumentException("ExternalSystemId must be provided.", nameof(externalSystemId));
@@ -40,6 +43,7 @@ namespace EnterpriseIntegrationHub.Domain.Entities
             Protocol = protocol;
             AuthenticationType = authenticationType;
             TimeoutSeconds = timeoutSeconds;
+            HttpMethod = httpMethod;
             Status = status;
         }
 
@@ -56,11 +60,13 @@ namespace EnterpriseIntegrationHub.Domain.Entities
             return true;
         }
 
-        public bool UpdateCommunication(string baseUrl, ConnectorProtocol protocol, ConnectorAuthenticationType authenticationType, int timeoutSeconds)
+        public bool UpdateCommunication(string baseUrl, ConnectorProtocol protocol, ConnectorAuthenticationType authenticationType, int timeoutSeconds, ConnectorHttpMethod? httpMethod = null)
         {
             ValidateCommunication(baseUrl, protocol, authenticationType, timeoutSeconds);
+            var effectiveMethod = httpMethod ?? HttpMethod;
+            ValidateHttpMethod(effectiveMethod);
 
-            var commChanged = BaseUrl != baseUrl || Protocol != protocol || AuthenticationType != authenticationType || TimeoutSeconds != timeoutSeconds;
+            var commChanged = BaseUrl != baseUrl || Protocol != protocol || AuthenticationType != authenticationType || TimeoutSeconds != timeoutSeconds || HttpMethod != effectiveMethod;
             if (!commChanged)
                 return false;
 
@@ -68,6 +74,7 @@ namespace EnterpriseIntegrationHub.Domain.Entities
             Protocol = protocol;
             AuthenticationType = authenticationType;
             TimeoutSeconds = timeoutSeconds;
+            HttpMethod = effectiveMethod;
 
             if (Status == ConnectorStatus.Active)
             {
@@ -121,6 +128,12 @@ namespace EnterpriseIntegrationHub.Domain.Entities
                 throw new ArgumentException("Description is required.", nameof(description));
             if (description.Length > 1000)
                 throw new ArgumentException("Description cannot exceed 1000 characters.", nameof(description));
+        }
+
+        private static void ValidateHttpMethod(ConnectorHttpMethod method)
+        {
+            if (!Enum.IsDefined(method))
+                throw new ArgumentOutOfRangeException(nameof(method), "Connector HTTP method is invalid.");
         }
 
         private static void ValidateCommunication(string baseUrl, ConnectorProtocol protocol, ConnectorAuthenticationType authenticationType, int timeoutSeconds)

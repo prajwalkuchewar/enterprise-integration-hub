@@ -20,6 +20,9 @@ public sealed class ExecutionStep
         Protocol = snapshot.Protocol;
         AuthenticationType = snapshot.AuthenticationType;
         TimeoutSeconds = snapshot.TimeoutSeconds;
+        if (!Enum.IsDefined(snapshot.HttpMethod))
+            throw new ArgumentOutOfRangeException(nameof(snapshot), "The destination HTTP method is invalid.");
+        HttpMethod = snapshot.HttpMethod;
         ExecutionOrder = snapshot.ExecutionOrder;
         Status = ExecutionStepStatus.Pending;
     }
@@ -32,6 +35,7 @@ public sealed class ExecutionStep
     public ConnectorProtocol Protocol { get; private set; }
     public ConnectorAuthenticationType AuthenticationType { get; private set; }
     public int TimeoutSeconds { get; private set; }
+    public ConnectorHttpMethod HttpMethod { get; private set; }
     public int ExecutionOrder { get; private set; }
     public ExecutionStepStatus Status { get; private set; }
     public DateTimeOffset? NextAttemptAt { get; private set; }

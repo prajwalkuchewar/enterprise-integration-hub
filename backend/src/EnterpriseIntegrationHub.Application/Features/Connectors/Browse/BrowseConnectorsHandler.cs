@@ -26,7 +26,8 @@ public sealed class BrowseConnectorsHandler
             Protocol: x.Protocol,
             AuthenticationType: x.AuthenticationType,
             TimeoutSeconds: x.TimeoutSeconds,
-            Status: x.Status))
+            Status: x.Status,
+            HttpMethod: x.HttpMethod))
             .ToList();
 
         return new ConnectorsResponseModel(

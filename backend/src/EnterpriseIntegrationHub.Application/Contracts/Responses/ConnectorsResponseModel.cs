@@ -16,6 +16,6 @@ public sealed record ConnectorSummary(
     ConnectorProtocol Protocol,
     ConnectorAuthenticationType AuthenticationType,
     int TimeoutSeconds,
-    ConnectorStatus Status
+    ConnectorStatus Status,
+    ConnectorHttpMethod HttpMethod = ConnectorHttpMethod.Post
 );
-

@@ -20,6 +20,7 @@ export interface Connector {
   protocol: number;
   authenticationType: number;
   timeoutSeconds: number;
+  httpMethod: number;
   status: number;
 }
 
@@ -55,6 +56,7 @@ export interface ConnectorRequest {
   protocol: number;
   authenticationType: number;
   timeoutSeconds: number;
+  httpMethod: number;
 }
 
 export interface WorkflowRequest {
@@ -85,6 +87,12 @@ export const authenticationTypes = [
   { value: 4, label: 'Bearer token' }
 ];
 
+export const httpMethods = [
+  { value: 1, label: 'POST' },
+  { value: 2, label: 'PUT' },
+  { value: 3, label: 'PATCH' }
+];
+
 export function environmentLabel(value: number): string {
   return environments.find((item) => item.value === value)?.label ?? 'Unknown';
 }
@@ -95,6 +103,10 @@ export function protocolLabel(value: number): string {
 
 export function authenticationLabel(value: number): string {
   return authenticationTypes.find((item) => item.value === value)?.label ?? 'Unknown';
+}
+
+export function httpMethodLabel(value: number): string {
+  return httpMethods.find((item) => item.value === value)?.label ?? 'Unknown';
 }
 
 export function statusLabel(kind: 'system' | 'connector' | 'workflow', value: number): string {

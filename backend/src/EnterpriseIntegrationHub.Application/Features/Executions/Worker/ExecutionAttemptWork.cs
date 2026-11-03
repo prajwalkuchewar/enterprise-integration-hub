@@ -14,7 +14,8 @@ public sealed record ExecutionAttemptWork(
     ConnectorAuthenticationType AuthenticationType,
     int TimeoutSeconds,
     string? CorrelationId,
-    string PayloadJson)
+    string PayloadJson,
+    ConnectorHttpMethod HttpMethod = ConnectorHttpMethod.Post)
 {
     public string IdempotencyKey => StepId.ToString("D");
 

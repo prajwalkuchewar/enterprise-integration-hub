@@ -37,6 +37,64 @@ public sealed class ApiHostIntegrationTests
     }
 
     [Fact]
+    public async Task ConnectorHttpMethod_RoundTripsAndOmittedUpdatePreservesIt()
+    {
+        using var factory = new EnterpriseIntegrationHubApiFactory();
+        using var client = factory.CreateClient();
+        var systemId = await CreateExternalSystemAsync(client, "Methods");
+        using var create = await PostJsonAsync(client, "/api/connectors", new
+        {
+            name = "Method test",
+            description = "Method test connector",
+            externalSystemId = systemId,
+            baseUrl = "https://connector.example.test",
+            protocol = 1,
+            authenticationType = 1,
+            timeoutSeconds = 30,
+            httpMethod = 2
+        });
+        create.StatusCode.Should().Be(HttpStatusCode.Created);
+        using var created = JsonDocument.Parse(await create.Content.ReadAsStringAsync());
+        var id = created.RootElement.GetProperty("id").GetGuid();
+        using var before = await client.GetAsync($"/api/connectors/{id}");
+        using var beforeBody = JsonDocument.Parse(await before.Content.ReadAsStringAsync());
+        beforeBody.RootElement.GetProperty("httpMethod").GetInt32().Should().Be(2);
+        var legacyUpdate = new
+        {
+            name = "Method test",
+            description = "Updated description",
+            baseUrl = "https://connector.example.test",
+            protocol = 1,
+            authenticationType = 1,
+            timeoutSeconds = 30
+        };
+        using var update = await client.PutAsync($"/api/connectors/{id}",
+            new StringContent(JsonSerializer.Serialize(legacyUpdate, JsonOptions), Encoding.UTF8, "application/json"));
+        update.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        using var after = await client.GetAsync($"/api/connectors/{id}");
+        using var afterBody = JsonDocument.Parse(await after.Content.ReadAsStringAsync());
+        afterBody.RootElement.GetProperty("httpMethod").GetInt32().Should().Be(2);
+
+        using var invalid = await client.PutAsync($"/api/connectors/{id}",
+            new StringContent(JsonSerializer.Serialize(new
+            {
+                name = "Method test",
+                description = "Updated description",
+                baseUrl = "https://connector.example.test",
+                protocol = 1,
+                authenticationType = 1,
+                timeoutSeconds = 30,
+                httpMethod = 99
+            }, JsonOptions), Encoding.UTF8, "application/json"));
+        invalid.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var defaultId = await CreateConnectorAsync(client, systemId, "Legacy connector");
+        using var legacy = await client.GetAsync($"/api/connectors/{defaultId}");
+        using var legacyBody = JsonDocument.Parse(await legacy.Content.ReadAsStringAsync());
+        legacyBody.RootElement.GetProperty("httpMethod").GetInt32().Should().Be(1);
+    }
+
+    [Fact]
     public async Task ActiveWorkflow_PreventsConnectorDeactivationThroughHttpApi()
     {
         using var factory = new EnterpriseIntegrationHubApiFactory();
@@ -92,4 +150,3 @@ public sealed class ApiHostIntegrationTests
     private static Task<HttpResponseMessage> PostJsonAsync(HttpClient client, string url, object payload) =>
         client.PostAsync(url, new StringContent(JsonSerializer.Serialize(payload, JsonOptions), Encoding.UTF8, "application/json"));
 }
-

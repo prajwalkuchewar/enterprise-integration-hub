@@ -59,7 +59,8 @@ public sealed class CreateConnectorHandler
             protocol: command.Protocol,
             authenticationType: command.AuthenticationType,
             timeoutSeconds: command.TimeoutSeconds,
-            status: ConnectorStatus.Draft);
+            status: ConnectorStatus.Draft,
+            httpMethod: command.HttpMethod);
 
         await _repository.AddAsync(connector, cancellationToken);
 

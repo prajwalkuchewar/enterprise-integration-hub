@@ -20,11 +20,18 @@ internal sealed class HttpExecutionDestinationInvoker(
         DestinationInvocationResult Result(DestinationInvocationStatus status, int? code = null) =>
             new(status, code, timer.ElapsedMilliseconds);
 
-        if (work.Protocol != ConnectorProtocol.REST || work.TimeoutSeconds is < 1 or > 86370 ||
+        if (work.Protocol != ConnectorProtocol.REST || !Enum.IsDefined(work.HttpMethod) || work.TimeoutSeconds is < 1 or > 86370 ||
             !policy.IsAllowedDestination(work.DestinationBaseUrl, out var uri))
             return Result(DestinationInvocationStatus.InvalidConfiguration);
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, uri);
+        var method = work.HttpMethod switch
+        {
+            ConnectorHttpMethod.Post => HttpMethod.Post,
+            ConnectorHttpMethod.Put => HttpMethod.Put,
+            ConnectorHttpMethod.Patch => HttpMethod.Patch,
+            _ => throw new InvalidOperationException("The destination HTTP method is invalid.")
+        };
+        using var request = new HttpRequestMessage(method, uri);
         request.Content = new StringContent(work.PayloadJson, Encoding.UTF8, "application/json");
         request.Headers.Add("Idempotency-Key", work.IdempotencyKey);
         if (!string.IsNullOrEmpty(work.CorrelationId))
