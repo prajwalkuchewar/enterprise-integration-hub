@@ -95,7 +95,13 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("int");
+
                     b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeadLetteredAt")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<DateTimeOffset?>("DispatchedAt")
@@ -104,11 +110,28 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("IntegrationExecutionId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTimeOffset?>("LeaseExpiresAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("LeaseOwner")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset>("NextAttemptAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("Id");
 
                     b.HasIndex("IntegrationExecutionId")
                         .IsUnique()
                         .HasDatabaseName("IX_ExecutionDispatchOutbox_ExecutionId");
+
+                    b.HasIndex("DispatchedAt", "DeadLetteredAt", "NextAttemptAt")
+                        .HasDatabaseName("IX_ExecutionDispatchOutbox_Dispatchable");
 
                     b.ToTable("ExecutionDispatchOutbox", (string)null);
                 });

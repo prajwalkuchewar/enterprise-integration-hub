@@ -13,8 +13,16 @@ public sealed class ExecutionDispatchOutboxConfiguration : IEntityTypeConfigurat
         builder.Property(message => message.Id).ValueGeneratedNever();
         builder.Property(message => message.CreatedAt).IsRequired();
         builder.Property(message => message.DispatchedAt).IsRequired(false);
+        builder.Property(message => message.NextAttemptAt).IsRequired();
+        builder.Property(message => message.LeaseOwner).HasMaxLength(200).IsRequired(false);
+        builder.Property(message => message.LeaseExpiresAt).IsRequired(false);
+        builder.Property(message => message.AttemptCount).IsRequired();
+        builder.Property(message => message.LastError).HasMaxLength(2000).IsRequired(false);
+        builder.Property(message => message.DeadLetteredAt).IsRequired(false);
         builder.HasIndex(message => message.IntegrationExecutionId).IsUnique()
             .HasDatabaseName("IX_ExecutionDispatchOutbox_ExecutionId");
+        builder.HasIndex(message => new { message.DispatchedAt, message.DeadLetteredAt, message.NextAttemptAt })
+            .HasDatabaseName("IX_ExecutionDispatchOutbox_Dispatchable");
         builder.HasOne<IntegrationExecution>().WithMany().HasForeignKey(message => message.IntegrationExecutionId).OnDelete(DeleteBehavior.Cascade);
     }
 }

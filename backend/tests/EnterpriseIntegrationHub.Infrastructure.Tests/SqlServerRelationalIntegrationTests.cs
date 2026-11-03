@@ -84,9 +84,15 @@ public sealed class SqlServerRelationalIntegrationTests(SqlServerFixture fixture
         new(name, "Integration test connector", externalSystemId, "https://example.test",
             ConnectorProtocol.REST, ConnectorAuthenticationType.APIKey, 30, ConnectorStatus.Active);
 
-    private sealed class TestDatabase(SqlServerFixture fixture, string databaseName, EnterpriseIntegrationHubDbContext context) : IAsyncDisposable
+    internal sealed class TestDatabase(
+        SqlServerFixture fixture,
+        string databaseName,
+        DbContextOptions<EnterpriseIntegrationHubDbContext> options,
+        EnterpriseIntegrationHubDbContext context) : IAsyncDisposable
     {
         public EnterpriseIntegrationHubDbContext Context { get; } = context;
+
+        public EnterpriseIntegrationHubDbContext CreateContext() => new(options);
 
         public static async Task<TestDatabase> CreateAsync(SqlServerFixture fixture)
         {
@@ -96,7 +102,7 @@ public sealed class SqlServerRelationalIntegrationTests(SqlServerFixture fixture
                 .Options;
             var context = new EnterpriseIntegrationHubDbContext(options);
             await context.Database.MigrateAsync();
-            return new TestDatabase(fixture, databaseName, context);
+            return new TestDatabase(fixture, databaseName, options, context);
         }
 
         public async ValueTask DisposeAsync()

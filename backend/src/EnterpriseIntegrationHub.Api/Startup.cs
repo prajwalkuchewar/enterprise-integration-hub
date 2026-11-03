@@ -20,8 +20,11 @@ using EnterpriseIntegrationHub.Application.Features.Workflows.Resolve;
 using EnterpriseIntegrationHub.Application.Features.Executions.Create;
 using EnterpriseIntegrationHub.Application.Features.Events.Ingest;
 using EnterpriseIntegrationHub.Application.Features.Connectors.IssueIngestionKey;
+using EnterpriseIntegrationHub.Application.Features.Executions.DispatchOutbox;
 
 using EnterpriseIntegrationHub.Application.Interfaces;
+using EnterpriseIntegrationHub.Api.Hosting;
+using EnterpriseIntegrationHub.Infrastructure.Messaging.Kafka;
 using EnterpriseIntegrationHub.Infrastructure.Persistence;
 using EnterpriseIntegrationHub.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -79,6 +82,16 @@ namespace EnterpriseIntegrationHub.Api
             services.AddScoped<IngestEventHandler>();
             services.AddScoped<IIntegrationExecutionRepository, IntegrationExecutionRepository>();
             services.AddScoped<IWorkflowRepository, WorkflowRepository>();
+
+            // Transactional outbox dispatch to Kafka (the poller only runs when Outbox:Enabled is true)
+            services.Configure<DispatchOutboxOptions>(Configuration.GetSection(DispatchOutboxOptions.SectionName));
+            services.AddScoped<DispatchOutboxBatchHandler>();
+            services.AddScoped<IExecutionDispatchOutboxRepository, ExecutionDispatchOutboxRepository>();
+            services.AddSingleton<IExecutionDispatchPublisher>(_ =>
+                new KafkaExecutionDispatchPublisher(
+                    Configuration.GetSection(KafkaOptions.SectionName).Get<KafkaOptions>() ?? new KafkaOptions()));
+            if (Configuration.GetValue<bool>($"{DispatchOutboxOptions.SectionName}:Enabled"))
+                services.AddHostedService<ExecutionDispatchOutboxWorker>();
 
             // Cross-origin requests (adjust origins as needed)
             services.AddCors(options =>

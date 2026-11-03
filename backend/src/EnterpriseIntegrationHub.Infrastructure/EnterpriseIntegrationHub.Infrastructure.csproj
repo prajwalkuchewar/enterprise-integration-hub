@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" Version="2.16.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.17" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.17">
       <PrivateAssets>all</PrivateAssets>
