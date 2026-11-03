@@ -2,6 +2,7 @@ using EnterpriseIntegrationHub.Api.Contracts.Requests;
 using EnterpriseIntegrationHub.Application.Features.Connectors.Activate;
 using EnterpriseIntegrationHub.Application.Features.Connectors.Browse;
 using EnterpriseIntegrationHub.Application.Features.Connectors.Create;
+using EnterpriseIntegrationHub.Application.Features.Connectors.IssueIngestionKey;
 using EnterpriseIntegrationHub.Application.Features.Connectors.ViewDetails;
 using EnterpriseIntegrationHub.Application.Contracts.Responses;
 using Microsoft.AspNetCore.Mvc;
@@ -24,6 +25,7 @@ public sealed class ConnectorsController : ControllerBase
     private readonly ViewConnectorDetailsHandler _viewDetailsHandler;
     private readonly ActivateConnectorHandler _activateHandler;
     private readonly DeactivateConnectorHandler _deactivateHandler;
+    private readonly IssueConnectorIngestionKeyHandler _issueIngestionKeyHandler;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConnectorsController"/> class.
@@ -34,7 +36,8 @@ public sealed class ConnectorsController : ControllerBase
         BrowseConnectorsHandler browseHandler,
         ViewConnectorDetailsHandler viewDetailsHandler,
         ActivateConnectorHandler activateHandler,
-        DeactivateConnectorHandler deactivateHandler)
+        DeactivateConnectorHandler deactivateHandler,
+        IssueConnectorIngestionKeyHandler issueIngestionKeyHandler)
     {
         _createHandler = createHandler;
         _updateHandler = updateHandler;
@@ -42,6 +45,22 @@ public sealed class ConnectorsController : ControllerBase
         _viewDetailsHandler = viewDetailsHandler;
         _activateHandler = activateHandler;
         _deactivateHandler = deactivateHandler;
+        _issueIngestionKeyHandler = issueIngestionKeyHandler;
+    }
+
+    /// <summary>
+    /// Issues a new ingestion key for a connector. The plaintext key is returned once; any previous key stops working.
+    /// </summary>
+    /// <param name="id">Connector identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>201 Created with the one-time ingestion key, or 404 if the connector does not exist.</returns>
+    [HttpPost("{id:guid}/ingestion-key")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> IssueIngestionKey([FromRoute] Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _issueIngestionKeyHandler.Handle(id, cancellationToken);
+        return Created($"/api/connectors/{id}", new { connectorId = result.ConnectorId, ingestionKey = result.IngestionKey });
     }
 
     /// <summary>Deactivates an active connector.</summary>

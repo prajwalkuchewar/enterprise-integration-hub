@@ -18,6 +18,8 @@ using EnterpriseIntegrationHub.Application.Features.Workflows.Update;
 using EnterpriseIntegrationHub.Application.Features.Workflows.ViewDetails;
 using EnterpriseIntegrationHub.Application.Features.Workflows.Resolve;
 using EnterpriseIntegrationHub.Application.Features.Executions.Create;
+using EnterpriseIntegrationHub.Application.Features.Events.Ingest;
+using EnterpriseIntegrationHub.Application.Features.Connectors.IssueIngestionKey;
 
 using EnterpriseIntegrationHub.Application.Interfaces;
 using EnterpriseIntegrationHub.Infrastructure.Persistence;
@@ -46,7 +48,9 @@ namespace EnterpriseIntegrationHub.Api
 
             // Persistence
             services.AddDbContext<EnterpriseIntegrationHubDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(
+                    Configuration.GetConnectionString("DefaultConnection"),
+                    sqlOptions => sqlOptions.EnableRetryOnFailure()));
 
             // Application services / DI
             services.AddScoped<CreateExternalSystemHandler>();
@@ -70,7 +74,9 @@ namespace EnterpriseIntegrationHub.Api
             services.AddScoped<UpdateWorkflowHandler>();
             services.AddScoped<ViewWorkflowDetailsHandler>();
             services.AddScoped<ResolveWorkflowHandler>();
+            services.AddScoped<IssueConnectorIngestionKeyHandler>();
             services.AddScoped<CreateWorkflowExecutionHandler>();
+            services.AddScoped<IngestEventHandler>();
             services.AddScoped<IIntegrationExecutionRepository, IntegrationExecutionRepository>();
             services.AddScoped<IWorkflowRepository, WorkflowRepository>();
 

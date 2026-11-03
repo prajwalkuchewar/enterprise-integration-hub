@@ -20,6 +20,9 @@ namespace EnterpriseIntegrationHub.Domain.Entities
 
         public ConnectorStatus Status { get; private set; }
 
+        /// <summary>SHA-256 hex digest of the connector's current ingestion key. The plaintext key is never stored.</summary>
+        public string? IngestionKeyHash { get; private set; }
+
         public Connector(string name, string description, Guid externalSystemId, string baseUrl, ConnectorProtocol protocol, ConnectorAuthenticationType authenticationType, int timeoutSeconds, ConnectorStatus status)
         {
             ValidateBasicInfo(name, description);
@@ -72,6 +75,15 @@ namespace EnterpriseIntegrationHub.Domain.Entities
             }
 
             return true;
+        }
+
+        public void AssignIngestionKeyHash(string keyHash)
+        {
+            if (string.IsNullOrWhiteSpace(keyHash) || keyHash.Length != 64 || keyHash.Any(character => !Uri.IsHexDigit(character)))
+                throw new ArgumentException("IngestionKeyHash must be a 64-character SHA-256 hex value.", nameof(keyHash));
+
+            IngestionKeyHash = keyHash.ToLowerInvariant();
+            UpdatedAt = DateTimeOffset.UtcNow;
         }
 
         public void MarkUpdated()

@@ -66,4 +66,12 @@ public sealed class ConnectorRepository : IConnectorRepository
             connector => connector.ExternalSystemId == externalSystemId && connector.Status == ConnectorStatus.Active,
             cancellationToken);
     }
+
+    public async Task<Connector?> GetByIngestionKeyHashAsync(string keyHash, CancellationToken cancellationToken)
+    {
+        return await _context.Connectors
+            .AsNoTracking()
+            .Where(x => x.IngestionKeyHash == keyHash)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 }
