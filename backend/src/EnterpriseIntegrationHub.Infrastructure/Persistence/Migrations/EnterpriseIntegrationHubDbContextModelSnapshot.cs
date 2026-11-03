@@ -103,8 +103,14 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("IntegrationExecutionId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("PayloadJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTimeOffset>("ReceivedAt")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("SchemaVersion")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("SourceConnectorId")
                         .HasColumnType("uniqueidentifier");

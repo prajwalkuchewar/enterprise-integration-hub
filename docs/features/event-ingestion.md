@@ -2,6 +2,10 @@
 
 Source systems submit events to the hub through an authenticated webhook. Each accepted event is recorded as a durable integration execution, together with an outbox row that will drive downstream dispatch.
 
+For new acceptances, the receipt stores the JSON payload and schema version in the same SQL transaction as the execution, steps, and outbox. Payloads may contain sensitive business data: restrict database access and backups accordingly, and do not log payloads. Encryption at rest and a retention policy must be configured for the deployment.
+
+Receipts accepted before payload persistence have no stored payload or schema version. They cannot be executed from the stored data; resending an identical event remains a duplicate and does not restore the missing payload.
+
 ## 1. Issue an ingestion key
 
 Each connector has at most one active ingestion key. The plaintext key is returned only once.
@@ -58,4 +62,4 @@ Content-Type: application/json
 ## Known gaps
 
 - Conflicting duplicates are rejected but not yet recorded as a diagnostic entry.
-- Downstream dispatch (the outbox worker) is not yet implemented, so accepted executions stay `Queued`.
+- The outbox can publish dispatches to Kafka, but an execution consumer and worker are not yet implemented, so accepted executions stay `Queued`.

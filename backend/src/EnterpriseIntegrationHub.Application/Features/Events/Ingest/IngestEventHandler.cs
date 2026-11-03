@@ -36,7 +36,9 @@ public sealed class IngestEventHandler(
                 command.EventType.Trim(),
                 occurredAt,
                 string.IsNullOrWhiteSpace(command.CorrelationId) ? null : command.CorrelationId.Trim(),
-                fingerprint),
+                fingerprint,
+                command.SchemaVersion,
+                command.Payload),
             cancellationToken);
     }
 
