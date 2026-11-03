@@ -90,6 +90,50 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.ToTable("Connectors", (string)null);
                 });
 
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.EventReceipt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EventFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid>("IntegrationExecutionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PayloadJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("ReceivedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("SchemaVersion")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("SourceConnectorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SourceEventId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .UseCollation("SQL_Latin1_General_CP1_CS_AS");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IntegrationExecutionId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_EventReceipts_IntegrationExecutionId");
+
+                    b.HasIndex("SourceConnectorId", "SourceEventId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_EventReceipts_SourceConnectorId_SourceEventId");
+
+                    b.ToTable("EventReceipts", (string)null);
+                });
+
             modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionDispatchOutbox", b =>
                 {
                     b.Property<Guid>("Id")
@@ -489,6 +533,21 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ExternalSystemId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.EventReceipt", b =>
+                {
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.IntegrationExecution", null)
+                        .WithMany()
+                        .HasForeignKey("IntegrationExecutionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.Connector", null)
+                        .WithMany()
+                        .HasForeignKey("SourceConnectorId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

@@ -1,6 +1,7 @@
 using EnterpriseIntegrationHub.Application.Features.Workflows.Resolve;
 using EnterpriseIntegrationHub.Application.Interfaces;
 using EnterpriseIntegrationHub.Domain.Entities;
+using System.Text.Json;
 
 namespace EnterpriseIntegrationHub.Application.Features.Executions.Create;
 
@@ -39,6 +40,7 @@ public sealed class CreateWorkflowExecutionHandler(
             command.EventFingerprint,
             steps);
         var createdOrExisting = await executionRepository.CreateIfAbsentAsync(
+            new EventReceipt(execution, command.SchemaVersion, command.Payload),
             execution,
             new ExecutionDispatchOutbox(execution.Id),
             cancellationToken);
@@ -69,5 +71,9 @@ public sealed class CreateWorkflowExecutionHandler(
             throw new ArgumentException("EventFingerprint must be a 64-character SHA-256 hex value.", nameof(command.EventFingerprint));
         if (command.CorrelationId?.Length > 200)
             throw new ArgumentException("CorrelationId must not exceed 200 characters.", nameof(command.CorrelationId));
+        if (command.SchemaVersion < 1)
+            throw new ArgumentException("SchemaVersion must be a positive integer.", nameof(command.SchemaVersion));
+        if (command.Payload.ValueKind != JsonValueKind.Object)
+            throw new ArgumentException("Payload must be a JSON object.", nameof(command.Payload));
     }
 }

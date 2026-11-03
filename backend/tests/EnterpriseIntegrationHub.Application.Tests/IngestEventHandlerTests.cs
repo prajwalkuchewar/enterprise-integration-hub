@@ -76,7 +76,7 @@ public class IngestEventHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenSourceSystemDoesNotMatchKeyOwner_ThrowsUnauthorized()
+    public async Task Handle_WhenSourceSystemDoesNotMatchKeyOwner_ThrowsForbidden()
     {
         var externalSystemId = Guid.NewGuid();
         SetupConnector(externalSystemId, ConnectorStatus.Active);
@@ -84,7 +84,7 @@ public class IngestEventHandlerTests
 
         var act = () => _handler.Handle(CreateCommand(sourceSystem: "Orders"), CancellationToken.None);
 
-        await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        await act.Should().ThrowAsync<ForbiddenAccessException>();
     }
 
     [Fact]
