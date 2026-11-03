@@ -19,4 +19,8 @@ public sealed class ExecutionDispatchInbox
     public Guid DispatchId { get; private set; }
     public Guid IntegrationExecutionId { get; private set; }
     public DateTimeOffset ReceivedAt { get; private set; }
+    public Guid? LeaseToken { get; private set; }
+    public DateTimeOffset? LeaseExpiresAt { get; private set; }
+    public DateTimeOffset? AvailableAt { get; private set; }
+    public DateTimeOffset? CompletedAt { get; private set; }
 }

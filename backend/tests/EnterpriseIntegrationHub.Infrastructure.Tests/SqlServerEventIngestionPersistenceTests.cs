@@ -162,6 +162,167 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         (await consumer.ExecutionDispatchInbox.CountAsync()).Should().Be(1);
     }
 
+    [Fact]
+    public async Task ExecutionLease_ConcurrentClaimsUnderReadCommittedSnapshot_OnlyOneWorkerOwnsWork()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        await database.Context.Database.ExecuteSqlRawAsync("ALTER DATABASE CURRENT SET READ_COMMITTED_SNAPSHOT ON");
+        var (execution, outbox) = await QueueDispatchAsync(database);
+        var contexts = Enumerable.Range(0, 8).Select(_ => database.CreateContext()).ToList();
+        try
+        {
+            var claims = await Task.WhenAll(contexts.Select(context =>
+                new ExecutionLeaseRepository(context).ClaimAsync(60, default)));
+            var claim = claims.Should().ContainSingle(item => item != null).Subject!;
+            claim.DispatchId.Should().Be(outbox.Id);
+            claim.ExecutionId.Should().Be(execution.Id);
+            claim.Token.Should().NotBeEmpty();
+        }
+        finally
+        {
+            foreach (var context in contexts)
+                await context.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task ExecutionLease_ConcurrentClaimsOfMultipleItems_AreUnique()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        var (_, firstOutbox) = await QueueDispatchAsync(database);
+        var (_, secondOutbox) = await QueueDispatchAsync(database);
+        var contexts = Enumerable.Range(0, 8).Select(_ => database.CreateContext()).ToList();
+        try
+        {
+            var claims = await Task.WhenAll(contexts.Select(context =>
+                new ExecutionLeaseRepository(context).ClaimAsync(60, default)));
+            claims.Where(item => item != null).Select(item => item!.DispatchId)
+                .Should().BeEquivalentTo([firstOutbox.Id, secondOutbox.Id]);
+            claims.Where(item => item != null).Select(item => item!.Token).Distinct().Should().HaveCount(2);
+        }
+        finally
+        {
+            foreach (var context in contexts)
+                await context.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task ExecutionLease_ExpiredOwnerIsFencedAndWorkCanBeReclaimed()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        var (_, outbox) = await QueueDispatchAsync(database);
+        await using var firstContext = database.CreateContext();
+        var firstRepository = new ExecutionLeaseRepository(firstContext);
+        var first = (await firstRepository.ClaimAsync(60, default))!;
+        await firstContext.Database.ExecuteSqlInterpolatedAsync($"""
+            UPDATE [ExecutionDispatchInbox]
+            SET [LeaseExpiresAt] = DATEADD(second, -1, SYSDATETIMEOFFSET())
+            WHERE [DispatchId] = {outbox.Id}
+            """);
+
+        (await firstRepository.RenewAsync(outbox.Id, first.Token, 60, default)).Should().BeFalse();
+        (await firstRepository.ReleaseAsync(outbox.Id, first.Token, null, default)).Should().BeFalse();
+        (await firstRepository.CompleteAsync(outbox.Id, first.Token, default)).Should().BeFalse();
+
+        await using var secondContext = database.CreateContext();
+        var secondRepository = new ExecutionLeaseRepository(secondContext);
+        var second = (await secondRepository.ClaimAsync(60, default))!;
+        second.DispatchId.Should().Be(outbox.Id);
+        second.Token.Should().NotBe(first.Token);
+        (await firstRepository.ReleaseAsync(outbox.Id, first.Token, null, default)).Should().BeFalse();
+        (await secondRepository.RenewAsync(outbox.Id, second.Token, 120, default)).Should().BeTrue();
+        var stored = await secondContext.ExecutionDispatchInbox.AsNoTracking().SingleAsync();
+        stored.LeaseExpiresAt.Should().BeAfter(second.ExpiresAt);
+    }
+
+    [Fact]
+    public async Task ExecutionLease_ReleaseDefersWorkUntilAvailable()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        var (_, outbox) = await QueueDispatchAsync(database);
+        await using var context = database.CreateContext();
+        var repository = new ExecutionLeaseRepository(context);
+        var first = (await repository.ClaimAsync(60, default))!;
+        (await repository.ReleaseAsync(outbox.Id, first.Token, DateTimeOffset.UtcNow.AddDays(1), default)).Should().BeTrue();
+        (await repository.ClaimAsync(60, default)).Should().BeNull();
+        await context.Database.ExecuteSqlInterpolatedAsync($"""
+            UPDATE [ExecutionDispatchInbox] SET [AvailableAt] = DATEADD(second, -1, SYSDATETIMEOFFSET())
+            WHERE [DispatchId] = {outbox.Id}
+            """);
+        var next = await repository.ClaimAsync(60, default);
+        next.Should().NotBeNull();
+        next!.Token.Should().NotBe(first.Token);
+    }
+
+    [Fact]
+    public async Task ExecutionLease_CompletionRequiresTerminalExecutionAndActiveOwner()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        var (execution, outbox) = await QueueDispatchAsync(database);
+        await using var context = database.CreateContext();
+        var repository = new ExecutionLeaseRepository(context);
+        var claim = (await repository.ClaimAsync(60, default))!;
+        (await repository.CompleteAsync(outbox.Id, claim.Token, default)).Should().BeFalse();
+
+        var storedExecution = await context.IntegrationExecutions.Include(item => item.Steps)
+            .SingleAsync(item => item.Id == execution.Id);
+        storedExecution.Cancel();
+        await context.SaveChangesAsync();
+
+        (await repository.CompleteAsync(outbox.Id, Guid.NewGuid(), default)).Should().BeFalse();
+        (await repository.CompleteAsync(outbox.Id, claim.Token, default)).Should().BeTrue();
+        (await repository.RenewAsync(outbox.Id, claim.Token, 60, default)).Should().BeFalse();
+        (await repository.ClaimAsync(60, default)).Should().BeNull();
+        (await context.ExecutionDispatchInbox.AsNoTracking().SingleAsync()).CompletedAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ExecutionLease_InvalidArgumentsFailBeforeAccessingDatabase()
+    {
+        var repository = new ExecutionLeaseRepository(null!);
+        await FluentActions.Awaiting(() => repository.ClaimAsync(0, default))
+            .Should().ThrowAsync<ArgumentOutOfRangeException>();
+        await FluentActions.Awaiting(() => repository.ClaimAsync(86401, default))
+            .Should().ThrowAsync<ArgumentOutOfRangeException>();
+        await FluentActions.Awaiting(() => repository.RenewAsync(Guid.Empty, Guid.NewGuid(), 60, default))
+            .Should().ThrowAsync<ArgumentException>();
+        await FluentActions.Awaiting(() => repository.ReleaseAsync(Guid.NewGuid(), Guid.Empty, null, default))
+            .Should().ThrowAsync<ArgumentException>();
+        await FluentActions.Awaiting(() => repository.CompleteAsync(Guid.Empty, Guid.NewGuid(), default))
+            .Should().ThrowAsync<ArgumentException>();
+    }
+
+    [Fact]
+    public async Task ExecutionLease_MigrationKeepsExistingInboxWorkAvailable()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        var (execution, outbox) = await QueueDispatchAsync(database);
+        await using (var migrationContext = database.CreateContext())
+        {
+            var migrator = migrationContext.GetService<IMigrator>();
+            await migrator.MigrateAsync("20261103151335_AddExecutionDispatchInbox");
+            await migrator.MigrateAsync();
+        }
+
+        await using var context = database.CreateContext();
+        var claim = await new ExecutionLeaseRepository(context).ClaimAsync(60, default);
+        claim.Should().NotBeNull();
+        claim!.DispatchId.Should().Be(outbox.Id);
+        claim.ExecutionId.Should().Be(execution.Id);
+    }
+
+    private static async Task<(IntegrationExecution Execution, ExecutionDispatchOutbox Outbox)> QueueDispatchAsync(
+        SqlServerRelationalIntegrationTests.TestDatabase database)
+    {
+        var source = await SeedSourceAsync(database.Context);
+        var (receipt, execution, outbox) = Accept(source, SourceEventId);
+        await using var context = database.CreateContext();
+        await new IntegrationExecutionRepository(context).CreateIfAbsentAsync(receipt, execution, outbox, default);
+        await new ExecutionDispatchInboxWriter(context).StoreAsync(Dispatch(execution, outbox), default);
+        return (execution, outbox);
+    }
+
     private static ExecutionDispatchMessage Dispatch(IntegrationExecution execution, ExecutionDispatchOutbox outbox) =>
         new(outbox.Id, 1, execution.Id, execution.WorkflowId, execution.WorkflowRevisionNumber,
             execution.SourceConnectorId, execution.SourceEventId, execution.TriggerEvent,

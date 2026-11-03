@@ -139,7 +139,19 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("DispatchId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTimeOffset?>("AvailableAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<Guid>("IntegrationExecutionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("LeaseExpiresAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("LeaseToken")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("ReceivedAt")
@@ -149,6 +161,12 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("IntegrationExecutionId")
                         .IsUnique();
+
+                    b.HasIndex("LeaseToken")
+                        .IsUnique()
+                        .HasFilter("[LeaseToken] IS NOT NULL");
+
+                    b.HasIndex("CompletedAt", "AvailableAt", "LeaseExpiresAt");
 
                     b.ToTable("ExecutionDispatchInbox", (string)null);
                 });
