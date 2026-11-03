@@ -21,6 +21,7 @@ using EnterpriseIntegrationHub.Application.Features.Executions.Create;
 using EnterpriseIntegrationHub.Application.Features.Events.Ingest;
 using EnterpriseIntegrationHub.Application.Features.Connectors.IssueIngestionKey;
 using EnterpriseIntegrationHub.Application.Features.Executions.DispatchOutbox;
+using EnterpriseIntegrationHub.Application.Features.Executions.Worker;
 
 using EnterpriseIntegrationHub.Application.Interfaces;
 using EnterpriseIntegrationHub.Api.Hosting;
@@ -91,8 +92,7 @@ namespace EnterpriseIntegrationHub.Api
             services.AddSingleton<IExecutionDispatchPublisher>(_ =>
                 new KafkaExecutionDispatchPublisher(
                     Configuration.GetSection(KafkaOptions.SectionName).Get<KafkaOptions>() ?? new KafkaOptions()));
-            if (Configuration.GetValue<bool>($"{DispatchOutboxOptions.SectionName}:Enabled"))
-                services.AddHostedService<ExecutionDispatchOutboxWorker>();
+            services.AddHostedService<ExecutionDispatchOutboxWorker>();
             services.AddScoped<IExecutionDispatchInboxWriter, ExecutionDispatchInboxWriter>();
             services.AddScoped<ExecutionDispatchRecordProcessor>();
             services.AddScoped<IExecutionLeaseRepository, ExecutionLeaseRepository>();
@@ -111,6 +111,9 @@ namespace EnterpriseIntegrationHub.Api
                 })
                 .RemoveAllLoggers();
             services.AddScoped<IExecutionDestinationInvoker, HttpExecutionDestinationInvoker>();
+            services.Configure<ExecutionWorkerOptions>(Configuration.GetSection(ExecutionWorkerOptions.SectionName));
+            services.AddScoped<ExecutionWorkerHandler>();
+            services.AddHostedService<ExecutionWorker>();
 
             // Cross-origin requests (adjust origins as needed)
             services.AddCors(options =>
