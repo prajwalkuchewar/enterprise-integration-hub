@@ -7,7 +7,7 @@ using EnterpriseIntegrationHub.Domain.Enums;
 
 namespace EnterpriseIntegrationHub.Api.Delivery;
 
-public sealed class HttpExecutionDestinationInvoker(
+internal sealed class HttpExecutionDestinationInvoker(
     IHttpClientFactory clients,
     DestinationNetworkPolicy policy,
     IConfiguration configuration) : IExecutionDestinationInvoker
