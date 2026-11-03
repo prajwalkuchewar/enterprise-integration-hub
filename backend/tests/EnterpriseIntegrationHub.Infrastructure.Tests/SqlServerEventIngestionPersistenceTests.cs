@@ -572,7 +572,7 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
                 context.Database.CurrentTransaction.Should().BeNull();
                 calls.Add(work);
             })
-            .ReturnsAsync(DestinationInvocationResult.Succeeded);
+            .ReturnsAsync(new DestinationInvocationResult(DestinationInvocationStatus.Succeeded, 202, 37));
         var worker = new ExecutionWorkerHandler(new ExecutionLeaseRepository(context), new ExecutionAttemptRepository(context), destination.Object);
 
         var result = await worker.RunOnceAsync(new ExecutionWorkerOptions(), default);
@@ -583,6 +583,8 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         await using var verify = database.CreateContext();
         (await verify.IntegrationExecutions.SingleAsync()).Status.Should().Be(IntegrationExecutionStatus.Succeeded);
         (await verify.ExecutionStepAttempts.CountAsync()).Should().Be(2);
+        var storedAttempts = await verify.ExecutionStepAttempts.ToListAsync();
+        storedAttempts.Should().OnlyContain(attempt => attempt.HttpStatusCode == 202 && attempt.DurationMilliseconds == 37);
     }
 
     [Fact]
@@ -593,7 +595,7 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         await using var context = database.CreateContext();
         var destination = new Mock<IExecutionDestinationInvoker>();
         destination.Setup(item => item.InvokeAsync(It.IsAny<ExecutionAttemptWork>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(DestinationInvocationResult.TransientFailure);
+            .ReturnsAsync(new DestinationInvocationResult(DestinationInvocationStatus.TransientFailure, 503, 54));
         var worker = new ExecutionWorkerHandler(new ExecutionLeaseRepository(context), new ExecutionAttemptRepository(context), destination.Object);
         var options = new ExecutionWorkerOptions { BaseRetryDelaySeconds = 2, MaxRetryDelaySeconds = 2 };
 
@@ -604,6 +606,8 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         var execution = await verify.IntegrationExecutions.SingleAsync();
         var step = await verify.ExecutionSteps.SingleAsync();
         var attempt = await verify.ExecutionStepAttempts.SingleAsync();
+        attempt.HttpStatusCode.Should().Be(503);
+        attempt.DurationMilliseconds.Should().Be(54);
         var inbox = await verify.ExecutionDispatchInbox.SingleAsync();
         execution.Status.Should().Be(IntegrationExecutionStatus.RetryScheduled);
         step.NextAttemptAt.Should().Be(inbox.AvailableAt);

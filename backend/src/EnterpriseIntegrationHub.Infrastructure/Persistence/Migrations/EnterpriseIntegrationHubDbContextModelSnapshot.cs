@@ -289,6 +289,9 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("CompletedAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<long?>("DurationMilliseconds")
+                        .HasColumnType("bigint");
+
                     b.Property<Guid>("ExecutionStepId")
                         .HasColumnType("uniqueidentifier");
 
@@ -299,6 +302,9 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.Property<string>("FailureMessage")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int?>("HttpStatusCode")
+                        .HasColumnType("int");
 
                     b.Property<DateTimeOffset>("StartedAt")
                         .HasColumnType("datetimeoffset");
