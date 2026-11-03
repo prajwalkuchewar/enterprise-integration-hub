@@ -7,11 +7,12 @@
 The caller supplies a normalized event envelope containing source connector ID, source event ID, trigger event, occurrence time, optional correlation ID, and a SHA-256 fingerprint of the canonical event type, occurrence time, and payload. The raw payload is not persisted. The handler validates the envelope, deduplicates by `(SourceConnectorId, SourceEventId)`, resolves the active workflow revision, then persists:
 
 - the immutable workflow revision snapshot (created when the workflow is activated);
+- an `EventReceipt` that records durable acceptance of the source event, linked to the execution;
 - an `IntegrationExecution` in `Queued` state;
 - one ordered `ExecutionStep` snapshot per workflow revision step, initially `Pending`;
 - one dispatch outbox record.
 
-The execution, step snapshots, and dispatch intent are written in one database transaction. No outbound request is made while creating the execution. The worker and dispatch publisher are later work.
+The receipt, execution, step snapshots, and dispatch intent are written in one database transaction (a single `SaveChanges`). If any insert fails, none commit. No outbound request is made while creating the execution. The worker and dispatch publisher are later work.
 
 ## Idempotency
 

@@ -21,6 +21,7 @@ public class EnterpriseIntegrationHubDbContext : DbContext
     public DbSet<ExecutionStep> ExecutionSteps => Set<ExecutionStep>();
     public DbSet<ExecutionStepAttempt> ExecutionStepAttempts => Set<ExecutionStepAttempt>();
     public DbSet<ExecutionDispatchOutbox> ExecutionDispatchOutbox => Set<ExecutionDispatchOutbox>();
+    public DbSet<EventReceipt> EventReceipts => Set<EventReceipt>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

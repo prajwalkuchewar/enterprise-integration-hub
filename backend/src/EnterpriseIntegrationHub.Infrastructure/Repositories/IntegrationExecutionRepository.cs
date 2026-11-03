@@ -12,6 +12,7 @@ public sealed class IntegrationExecutionRepository(EnterpriseIntegrationHubDbCon
         FindBySourceEventAsync(sourceConnectorId, sourceEventId, cancellationToken);
 
     public async Task<IntegrationExecution> CreateIfAbsentAsync(
+        EventReceipt receipt,
         IntegrationExecution execution,
         ExecutionDispatchOutbox dispatch,
         CancellationToken cancellationToken)
@@ -20,6 +21,8 @@ public sealed class IntegrationExecutionRepository(EnterpriseIntegrationHubDbCon
         if (existing is not null)
             return existing;
 
+        // A single SaveChanges runs all inserts in one SQL transaction. If any insert fails, none are committed.
+        context.EventReceipts.Add(receipt);
         context.IntegrationExecutions.Add(execution);
         context.ExecutionDispatchOutbox.Add(dispatch);
         try

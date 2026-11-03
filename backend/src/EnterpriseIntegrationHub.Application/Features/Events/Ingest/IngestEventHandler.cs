@@ -52,7 +52,7 @@ public sealed class IngestEventHandler(
             ?? throw new KeyNotFoundException($"External system with ID {connector.ExternalSystemId} not found.");
 
         if (!string.Equals(externalSystem.Name, sourceSystem, StringComparison.OrdinalIgnoreCase))
-            throw new UnauthorizedAccessException($"The ingestion key is not authorized to submit events for source system '{sourceSystem}'.");
+            throw new ForbiddenAccessException($"The ingestion key is not authorized to submit events for source system '{sourceSystem}'.");
     }
 
     private static void Validate(IngestEventCommand command)
