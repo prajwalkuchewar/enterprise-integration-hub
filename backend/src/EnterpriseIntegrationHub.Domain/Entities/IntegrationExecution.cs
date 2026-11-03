@@ -105,13 +105,13 @@ public sealed class IntegrationExecution : BaseEntity
 
     public void MarkStepSucceeded(int executionOrder) => MarkStepSucceeded(executionOrder, DateTimeOffset.UtcNow);
 
-    public void MarkStepSucceeded(int executionOrder, DateTimeOffset now)
+    public void MarkStepSucceeded(int executionOrder, DateTimeOffset now, int? httpStatusCode = null, long? durationMilliseconds = null)
     {
         if (now == default)
             throw new ArgumentException("A completion time must be provided.", nameof(now));
         EnsureRunning();
         var step = GetCurrentStep(executionOrder);
-        step.MarkSucceeded(now);
+        step.MarkSucceeded(now, httpStatusCode, durationMilliseconds);
         if (Steps.All(candidate => candidate.Status == ExecutionStepStatus.Succeeded))
         {
             Status = IntegrationExecutionStatus.Succeeded;
@@ -122,13 +122,14 @@ public sealed class IntegrationExecution : BaseEntity
     public void MarkStepFailed(int executionOrder, string failureCode, string failureMessage, DateTimeOffset? retryAt) =>
         MarkStepFailed(executionOrder, failureCode, failureMessage, retryAt, DateTimeOffset.UtcNow);
 
-    public void MarkStepFailed(int executionOrder, string failureCode, string failureMessage, DateTimeOffset? retryAt, DateTimeOffset now)
+    public void MarkStepFailed(int executionOrder, string failureCode, string failureMessage, DateTimeOffset? retryAt, DateTimeOffset now,
+        int? httpStatusCode = null, long? durationMilliseconds = null)
     {
         if (now == default)
             throw new ArgumentException("A completion time must be provided.", nameof(now));
         EnsureRunning();
         var step = GetCurrentStep(executionOrder);
-        step.MarkFailed(failureCode, failureMessage, retryAt, now);
+        step.MarkFailed(failureCode, failureMessage, retryAt, now, httpStatusCode, durationMilliseconds);
         if (retryAt.HasValue)
         {
             Status = IntegrationExecutionStatus.RetryScheduled;
