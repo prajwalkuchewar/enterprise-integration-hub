@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 using EnterpriseIntegrationHub.Application.Features.Executions.DispatchOutbox;
+using EnterpriseIntegrationHub.Application.Features.Executions.Worker;
 using EnterpriseIntegrationHub.Domain.Entities;
 using EnterpriseIntegrationHub.Domain.Enums;
 using EnterpriseIntegrationHub.Infrastructure.Persistence;
@@ -16,6 +17,7 @@ using EnterpriseIntegrationHub.Infrastructure.Repositories;
 using FluentAssertions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Xunit;
@@ -312,10 +314,263 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         claim.ExecutionId.Should().Be(execution.Id);
     }
 
-    private static async Task<(IntegrationExecution Execution, ExecutionDispatchOutbox Outbox)> QueueDispatchAsync(
-        SqlServerRelationalIntegrationTests.TestDatabase database)
+    [Fact]
+    public async Task FencedAttempt_BeginIsIdempotentAndSuccessCompletesExecution()
     {
-        var source = await SeedSourceAsync(database.Context);
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        var (execution, _) = await QueueDispatchAsync(database);
+        await using var context = database.CreateContext();
+        var lease = (await new ExecutionLeaseRepository(context).ClaimAsync(60, default))!;
+        var attempts = new ExecutionAttemptRepository(context);
+
+        var first = await attempts.BeginAsync(lease, 3, default);
+        var repeated = await attempts.BeginAsync(lease, 3, default);
+        first.Status.Should().Be(BeginExecutionAttemptStatus.Ready);
+        first.Work.Should().NotBeNull();
+        repeated.Work!.AttemptId.Should().Be(first.Work!.AttemptId);
+        first.Work.ExecutionId.Should().Be(execution.Id);
+        first.Work.IdempotencyKey.Should().Be(first.Work.StepId.ToString("D"));
+        first.Work.ToString().Should().NotContain(first.Work.PayloadJson);
+        using (var payload = JsonDocument.Parse(first.Work.PayloadJson))
+            payload.RootElement.GetProperty("nested").GetProperty("amount").GetInt32().Should().Be(42);
+
+        (await attempts.FinishAsync(lease, first.Work.AttemptId, new(true, null, null), 3, default)).Should().BeTrue();
+        await using var verify = database.CreateContext();
+        var stored = await verify.IntegrationExecutions.Include(item => item.Steps).ThenInclude(step => step.Attempts).SingleAsync();
+        stored.Status.Should().Be(IntegrationExecutionStatus.Succeeded);
+        stored.Steps.Single().Attempts.Should().ContainSingle()
+            .Which.Status.Should().Be(ExecutionStepAttemptStatus.Succeeded);
+        var inbox = await verify.ExecutionDispatchInbox.SingleAsync();
+        inbox.CompletedAt.Should().NotBeNull();
+        inbox.ActiveAttemptId.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task FencedAttempt_MultipleStepsCompleteInOrderWithoutRepeatingSucceededSteps()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        await QueueDispatchAsync(database, multipleSteps: true);
+        await using var context = database.CreateContext();
+        var lease = (await new ExecutionLeaseRepository(context).ClaimAsync(60, default))!;
+        var attempts = new ExecutionAttemptRepository(context);
+        var first = (await attempts.BeginAsync(lease, 3, default)).Work!;
+        first.ExecutionOrder.Should().Be(1);
+        (await attempts.FinishAsync(lease, first.AttemptId, new(true, null, null), 3, default)).Should().BeTrue();
+        var second = (await attempts.BeginAsync(lease, 3, default)).Work!;
+        second.ExecutionOrder.Should().Be(2);
+        second.StepId.Should().NotBe(first.StepId);
+        (await attempts.FinishAsync(lease, second.AttemptId, new(true, null, null), 3, default)).Should().BeTrue();
+
+        await using var verify = database.CreateContext();
+        var execution = await verify.IntegrationExecutions.Include(item => item.Steps).ThenInclude(step => step.Attempts).SingleAsync();
+        execution.Status.Should().Be(IntegrationExecutionStatus.Succeeded);
+        execution.Steps.Should().HaveCount(2);
+        execution.Steps.Should().OnlyContain(step => step.Status == ExecutionStepStatus.Succeeded && step.Attempts.Count == 1);
+    }
+
+    [Fact]
+    public async Task FencedAttempt_StaleOwnerCannotOverwriteRecoveredAttempt()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        var (_, outbox) = await QueueDispatchAsync(database);
+        await using var oldContext = database.CreateContext();
+        var oldLease = (await new ExecutionLeaseRepository(oldContext).ClaimAsync(60, default))!;
+        var oldAttempts = new ExecutionAttemptRepository(oldContext);
+        var oldWork = (await oldAttempts.BeginAsync(oldLease, 3, default)).Work!;
+        await oldContext.Database.ExecuteSqlInterpolatedAsync($"""
+            UPDATE [ExecutionDispatchInbox] SET [LeaseExpiresAt] = DATEADD(second, -1, SYSDATETIMEOFFSET())
+            WHERE [DispatchId] = {outbox.Id}
+            """);
+
+        await using var newContext = database.CreateContext();
+        var newLease = (await new ExecutionLeaseRepository(newContext).ClaimAsync(60, default))!;
+        var newAttempts = new ExecutionAttemptRepository(newContext);
+        var newWork = (await newAttempts.BeginAsync(newLease, 3, default)).Work!;
+        newWork.AttemptId.Should().NotBe(oldWork.AttemptId);
+        newWork.AttemptNumber.Should().Be(2);
+        newWork.IdempotencyKey.Should().Be(oldWork.IdempotencyKey);
+        (await oldAttempts.FinishAsync(oldLease, oldWork.AttemptId, new(true, null, null), 3, default)).Should().BeFalse();
+        (await newAttempts.FinishAsync(newLease, newWork.AttemptId, new(true, null, null), 3, default)).Should().BeTrue();
+
+        await using var verify = database.CreateContext();
+        var step = await verify.ExecutionSteps.Include(item => item.Attempts).SingleAsync();
+        step.Attempts.Single(item => item.Id == oldWork.AttemptId).FailureCode.Should().Be("INTERRUPTED");
+        step.Attempts.Single(item => item.Id == newWork.AttemptId).Status.Should().Be(ExecutionStepAttemptStatus.Succeeded);
+    }
+
+    [Fact]
+    public async Task FencedAttempt_InterruptedAttemptAtLimitFailsWithoutAnotherAttempt()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        var (_, outbox) = await QueueDispatchAsync(database);
+        await using var context = database.CreateContext();
+        var leases = new ExecutionLeaseRepository(context);
+        var oldLease = (await leases.ClaimAsync(60, default))!;
+        await new ExecutionAttemptRepository(context).BeginAsync(oldLease, 1, default);
+        await context.Database.ExecuteSqlInterpolatedAsync($"""
+            UPDATE [ExecutionDispatchInbox] SET [LeaseExpiresAt] = DATEADD(second, -1, SYSDATETIMEOFFSET())
+            WHERE [DispatchId] = {outbox.Id}
+            """);
+        var newLease = (await leases.ClaimAsync(60, default))!;
+        var result = await new ExecutionAttemptRepository(context).BeginAsync(newLease, 1, default);
+        result.Status.Should().Be(BeginExecutionAttemptStatus.Completed);
+        result.Work.Should().BeNull();
+
+        await using var verify = database.CreateContext();
+        (await verify.IntegrationExecutions.SingleAsync()).Status.Should().Be(IntegrationExecutionStatus.Failed);
+        (await verify.ExecutionStepAttempts.SingleAsync()).FailureCode.Should().Be("INTERRUPTED");
+        (await verify.ExecutionDispatchInbox.SingleAsync()).CompletedAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task FencedAttempt_TransientFailureSchedulesRetryAndPreservesAttemptHistory()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        var (_, outbox) = await QueueDispatchAsync(database);
+        await using var context = database.CreateContext();
+        var leases = new ExecutionLeaseRepository(context);
+        var lease = (await leases.ClaimAsync(60, default))!;
+        var attempts = new ExecutionAttemptRepository(context);
+        var first = (await attempts.BeginAsync(lease, 3, default)).Work!;
+        var retryAt = DateTimeOffset.UtcNow.AddDays(1);
+        (await attempts.FinishAsync(lease, first.AttemptId,
+            new(false, ExecutionAttemptFailure.TransientDestination, retryAt), 3, default)).Should().BeTrue();
+        (await leases.ClaimAsync(60, default)).Should().BeNull();
+        await context.Database.ExecuteSqlInterpolatedAsync($"""
+            UPDATE [ExecutionDispatchInbox] SET [AvailableAt] = DATEADD(second, -1, SYSDATETIMEOFFSET())
+            WHERE [DispatchId] = {outbox.Id};
+            UPDATE [ExecutionSteps] SET [NextAttemptAt] = DATEADD(second, -1, SYSDATETIMEOFFSET())
+            WHERE [Id] = {first.StepId};
+            """);
+
+        var retryLease = (await leases.ClaimAsync(60, default))!;
+        var retry = (await attempts.BeginAsync(retryLease, 3, default)).Work!;
+        retry.AttemptNumber.Should().Be(2);
+        retry.IdempotencyKey.Should().Be(first.IdempotencyKey);
+        (await attempts.FinishAsync(retryLease, retry.AttemptId, new(true, null, null), 3, default)).Should().BeTrue();
+
+        await using var verify = database.CreateContext();
+        var step = await verify.ExecutionSteps.Include(item => item.Attempts).SingleAsync();
+        step.Attempts.Should().HaveCount(2);
+        step.Attempts.Single(item => item.Id == first.AttemptId).FailureCode.Should().Be("DESTINATION_TRANSIENT");
+        step.Status.Should().Be(ExecutionStepStatus.Succeeded);
+    }
+
+    [Fact]
+    public async Task FencedAttempt_ExhaustedRetryLimitFailsExecution()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        await QueueDispatchAsync(database);
+        await using var context = database.CreateContext();
+        var lease = (await new ExecutionLeaseRepository(context).ClaimAsync(60, default))!;
+        var attempts = new ExecutionAttemptRepository(context);
+        var work = (await attempts.BeginAsync(lease, 1, default)).Work!;
+        (await attempts.FinishAsync(lease, work.AttemptId,
+            new(false, ExecutionAttemptFailure.TransientDestination, DateTimeOffset.UtcNow.AddMinutes(1)), 1, default)).Should().BeTrue();
+
+        await using var verify = database.CreateContext();
+        (await verify.IntegrationExecutions.SingleAsync()).Status.Should().Be(IntegrationExecutionStatus.Failed);
+        (await verify.ExecutionDispatchInbox.SingleAsync()).CompletedAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task FencedAttempt_LegacyReceiptFailsWithoutReturningWork()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        var (execution, _) = await QueueDispatchAsync(database);
+        await using var context = database.CreateContext();
+        await context.Database.ExecuteSqlInterpolatedAsync($"""
+            UPDATE [EventReceipts] SET [PayloadJson] = NULL, [SchemaVersion] = NULL
+            WHERE [IntegrationExecutionId] = {execution.Id}
+            """);
+        var lease = (await new ExecutionLeaseRepository(context).ClaimAsync(60, default))!;
+        var result = await new ExecutionAttemptRepository(context).BeginAsync(lease, 3, default);
+        result.Status.Should().Be(BeginExecutionAttemptStatus.Completed);
+        result.Work.Should().BeNull();
+
+        await using var verify = database.CreateContext();
+        (await verify.IntegrationExecutions.SingleAsync()).Status.Should().Be(IntegrationExecutionStatus.Failed);
+        (await verify.ExecutionStepAttempts.SingleAsync()).FailureCode.Should().Be("PAYLOAD_UNAVAILABLE");
+        (await verify.ExecutionDispatchInbox.SingleAsync()).CompletedAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task FencedAttempt_InsertFailureRollsBackExecutionAndInboxState()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        await QueueDispatchAsync(database);
+        await using var context = database.CreateContext();
+        var lease = (await new ExecutionLeaseRepository(context).ClaimAsync(60, default))!;
+        await context.Database.ExecuteSqlRawAsync(
+            "CREATE TRIGGER TR_FailAttempt ON ExecutionStepAttempts AFTER INSERT AS THROW 50001, 'Injected failure', 1;");
+        var act = () => new ExecutionAttemptRepository(context).BeginAsync(lease, 3, default);
+        await act.Should().ThrowAsync<DbUpdateException>();
+
+        await using var verify = database.CreateContext();
+        (await verify.IntegrationExecutions.SingleAsync()).Status.Should().Be(IntegrationExecutionStatus.Queued);
+        (await verify.ExecutionSteps.SingleAsync()).Status.Should().Be(ExecutionStepStatus.Pending);
+        (await verify.ExecutionStepAttempts.CountAsync()).Should().Be(0);
+        (await verify.ExecutionDispatchInbox.SingleAsync()).ActiveAttemptId.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task FencedAttempt_LeaseExpiryDuringTransactionRollsBackAttempt()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        await QueueDispatchAsync(database);
+        await using var claimContext = database.CreateContext();
+        var lease = (await new ExecutionLeaseRepository(claimContext).ClaimAsync(1, default))!;
+        var databaseName = database.Context.Database.GetDbConnection().Database;
+        var options = new DbContextOptionsBuilder<EnterpriseIntegrationHubDbContext>()
+            .UseSqlServer(fixture.GetConnectionString(databaseName))
+            .AddInterceptors(new DelayedSaveInterceptor())
+            .Options;
+        await using var delayed = new EnterpriseIntegrationHubDbContext(options);
+
+        var result = await new ExecutionAttemptRepository(delayed).BeginAsync(lease, 3, default);
+
+        result.Status.Should().Be(BeginExecutionAttemptStatus.LeaseLost);
+        await using var verify = database.CreateContext();
+        (await verify.IntegrationExecutions.SingleAsync()).Status.Should().Be(IntegrationExecutionStatus.Queued);
+        (await verify.ExecutionStepAttempts.CountAsync()).Should().Be(0);
+        (await verify.ExecutionDispatchInbox.SingleAsync()).ActiveAttemptId.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task FencedAttempt_InboxUpdateFailureRollsBackCompletedAttempt()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        await QueueDispatchAsync(database);
+        await using var context = database.CreateContext();
+        var lease = (await new ExecutionLeaseRepository(context).ClaimAsync(60, default))!;
+        var repository = new ExecutionAttemptRepository(context);
+        var work = (await repository.BeginAsync(lease, 3, default)).Work!;
+        await context.Database.ExecuteSqlRawAsync(
+            "CREATE TRIGGER TR_FailInboxUpdate ON ExecutionDispatchInbox AFTER UPDATE AS THROW 50001, 'Injected failure', 1;");
+
+        var act = () => repository.FinishAsync(lease, work.AttemptId, new(true, null, null), 3, default);
+        await act.Should().ThrowAsync<SqlException>().Where(exception => exception.Number == 50001);
+
+        await using var verify = database.CreateContext();
+        (await verify.IntegrationExecutions.SingleAsync()).Status.Should().Be(IntegrationExecutionStatus.Running);
+        (await verify.ExecutionStepAttempts.SingleAsync()).Status.Should().Be(ExecutionStepAttemptStatus.Running);
+        (await verify.ExecutionDispatchInbox.SingleAsync()).ActiveAttemptId.Should().Be(work.AttemptId);
+    }
+
+    private sealed class DelayedSaveInterceptor : SaveChangesInterceptor
+    {
+        public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
+            DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+            return result;
+        }
+    }
+
+    private static async Task<(IntegrationExecution Execution, ExecutionDispatchOutbox Outbox)> QueueDispatchAsync(
+        SqlServerRelationalIntegrationTests.TestDatabase database, bool multipleSteps = false)
+    {
+        var source = await SeedSourceAsync(database.Context, multipleSteps);
         var (receipt, execution, outbox) = Accept(source, SourceEventId);
         await using var context = database.CreateContext();
         await new IntegrationExecutionRepository(context).CreateIfAbsentAsync(receipt, execution, outbox, default);
@@ -464,7 +719,7 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         await context.ExecutionDispatchOutbox.CountAsync(outbox => context.IntegrationExecutions
             .Any(execution => execution.Id == outbox.IntegrationExecutionId && execution.SourceConnectorId == connectorId)));
 
-    private static async Task<EventSource> SeedSourceAsync(EnterpriseIntegrationHubDbContext context)
+    private static async Task<EventSource> SeedSourceAsync(EnterpriseIntegrationHubDbContext context, bool multipleSteps = false)
     {
         var externalSystem = new ExternalSystem($"Orders-{Guid.NewGuid():N}", "Integration test system", ExternalSystemEnvironment.Production, ExternalSystemStatus.Active);
         context.ExternalSystems.Add(externalSystem);
@@ -475,9 +730,16 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         var destination = new Connector("Destination", "Destination connector", externalSystem.Id, "https://example.test/destination",
             ConnectorProtocol.REST, ConnectorAuthenticationType.APIKey, 30, ConnectorStatus.Active);
         context.Connectors.AddRange(source, destination);
+        var secondDestination = new Connector("Second destination", "Destination connector", externalSystem.Id, "https://example.test/second",
+            ConnectorProtocol.REST, ConnectorAuthenticationType.APIKey, 30, ConnectorStatus.Active);
+        if (multipleSteps)
+            context.Connectors.Add(secondDestination);
         await context.SaveChangesAsync();
 
-        var workflow = new Workflow($"Workflow-{Guid.NewGuid():N}", source.Id, "order.created", [new(destination.Id, 1)]);
+        var definitions = new List<WorkflowStepDefinition> { new(destination.Id, 1) };
+        if (multipleSteps)
+            definitions.Add(new(secondDestination.Id, 2));
+        var workflow = new Workflow($"Workflow-{Guid.NewGuid():N}", source.Id, "order.created", definitions);
         workflow.Activate();
         context.Workflows.Add(workflow);
         await context.SaveChangesAsync();
@@ -486,14 +748,13 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         context.WorkflowRevisions.Add(revision);
         await context.SaveChangesAsync();
 
-        var steps = revision.Steps.Select(step => new ExecutionStepSnapshot(
-            step.Id,
-            destination.Id,
-            destination.BaseUrl,
-            destination.Protocol,
-            destination.AuthenticationType,
-            destination.TimeoutSeconds,
-            step.ExecutionOrder)).ToList();
+        var destinations = new[] { destination, secondDestination }.ToDictionary(connector => connector.Id);
+        var steps = revision.Steps.Select(step =>
+        {
+            var connector = destinations[step.DestinationConnectorId];
+            return new ExecutionStepSnapshot(step.Id, connector.Id, connector.BaseUrl,
+                connector.Protocol, connector.AuthenticationType, connector.TimeoutSeconds, step.ExecutionOrder);
+        }).ToList();
 
         context.ChangeTracker.Clear();
         return new EventSource(source.Id, revision, steps);

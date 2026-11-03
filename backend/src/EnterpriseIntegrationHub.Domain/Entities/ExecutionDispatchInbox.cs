@@ -23,4 +23,6 @@ public sealed class ExecutionDispatchInbox
     public DateTimeOffset? LeaseExpiresAt { get; private set; }
     public DateTimeOffset? AvailableAt { get; private set; }
     public DateTimeOffset? CompletedAt { get; private set; }
+    public Guid? ActiveAttemptId { get; private set; }
+    public Guid? ActiveAttemptLeaseToken { get; private set; }
 }

@@ -95,6 +95,7 @@ namespace EnterpriseIntegrationHub.Api
             services.AddScoped<IExecutionDispatchInboxWriter, ExecutionDispatchInboxWriter>();
             services.AddScoped<ExecutionDispatchRecordProcessor>();
             services.AddScoped<IExecutionLeaseRepository, ExecutionLeaseRepository>();
+            services.AddScoped<IExecutionAttemptRepository, ExecutionAttemptRepository>();
             services.AddHostedService<ExecutionDispatchConsumerWorker>();
 
             // Cross-origin requests (adjust origins as needed)

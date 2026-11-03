@@ -10,6 +10,24 @@ namespace EnterpriseIntegrationHub.Domain.Tests;
 public sealed class IntegrationExecutionTests
 {
     [Fact]
+    public void AttemptCompletion_UsesProvidedTimeForStepAndExecution()
+    {
+        var execution = CreateExecution();
+        var start = DateTimeOffset.UtcNow;
+        var firstCompleted = start.AddSeconds(1);
+        var secondCompleted = start.AddSeconds(2);
+        execution.Start(start);
+        var first = execution.StartStepAttempt(1, start);
+        execution.MarkStepSucceeded(1, firstCompleted);
+        var second = execution.StartStepAttempt(2, firstCompleted);
+        execution.MarkStepSucceeded(2, secondCompleted);
+
+        first.CompletedAt.Should().Be(firstCompleted);
+        second.CompletedAt.Should().Be(secondCompleted);
+        execution.CompletedAt.Should().Be(secondCompleted);
+    }
+
+    [Fact]
     public void Attempts_MustRunSequentially_AndCompleteExecutionOnlyAfterAllStepsSucceed()
     {
         var execution = CreateExecution();

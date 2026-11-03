@@ -8,7 +8,9 @@ public sealed class ExecutionDispatchInboxConfiguration : IEntityTypeConfigurati
 {
     public void Configure(EntityTypeBuilder<ExecutionDispatchInbox> builder)
     {
-        builder.ToTable("ExecutionDispatchInbox");
+        builder.ToTable("ExecutionDispatchInbox", table => table.HasCheckConstraint(
+            "CK_ExecutionDispatchInbox_ActiveAttempt",
+            "([ActiveAttemptId] IS NULL AND [ActiveAttemptLeaseToken] IS NULL) OR ([ActiveAttemptId] IS NOT NULL AND [ActiveAttemptLeaseToken] IS NOT NULL)"));
         builder.HasKey(item => item.DispatchId);
         builder.Property(item => item.DispatchId).ValueGeneratedNever();
         builder.Property(item => item.ReceivedAt).IsRequired();
@@ -17,5 +19,6 @@ public sealed class ExecutionDispatchInboxConfiguration : IEntityTypeConfigurati
         builder.HasIndex(item => new { item.CompletedAt, item.AvailableAt, item.LeaseExpiresAt });
         builder.HasOne<ExecutionDispatchOutbox>().WithMany().HasForeignKey(item => item.DispatchId).OnDelete(DeleteBehavior.NoAction);
         builder.HasOne<IntegrationExecution>().WithMany().HasForeignKey(item => item.IntegrationExecutionId).OnDelete(DeleteBehavior.NoAction);
+        builder.HasOne<ExecutionStepAttempt>().WithMany().HasForeignKey(item => item.ActiveAttemptId).OnDelete(DeleteBehavior.NoAction);
     }
 }

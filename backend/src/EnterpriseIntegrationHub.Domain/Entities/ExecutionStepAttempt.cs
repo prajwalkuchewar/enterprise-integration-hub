@@ -24,14 +24,14 @@ public sealed class ExecutionStepAttempt
     public string? FailureCode { get; private set; }
     public string? FailureMessage { get; private set; }
 
-    internal void Succeed()
+    internal void Succeed(DateTimeOffset completedAt)
     {
         EnsureRunning();
         Status = ExecutionStepAttemptStatus.Succeeded;
-        CompletedAt = DateTimeOffset.UtcNow;
+        CompletedAt = completedAt;
     }
 
-    internal void Fail(string failureCode, string failureMessage)
+    internal void Fail(string failureCode, string failureMessage, DateTimeOffset completedAt)
     {
         EnsureRunning();
         if (string.IsNullOrWhiteSpace(failureCode))
@@ -40,7 +40,7 @@ public sealed class ExecutionStepAttempt
             throw new ArgumentException("FailureMessage is required.", nameof(failureMessage));
 
         Status = ExecutionStepAttemptStatus.Failed;
-        CompletedAt = DateTimeOffset.UtcNow;
+        CompletedAt = completedAt;
         FailureCode = failureCode.Length <= 100 ? failureCode : failureCode[..100];
         FailureMessage = failureMessage.Length <= 2000 ? failureMessage : failureMessage[..2000];
     }
