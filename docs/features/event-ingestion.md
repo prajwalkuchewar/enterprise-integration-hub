@@ -62,4 +62,4 @@ Content-Type: application/json
 ## Known gaps
 
 - Conflicting duplicates are rejected but not yet recorded as a diagnostic entry.
-- The outbox can publish dispatches to Kafka, but an execution consumer and worker are not yet implemented, so accepted executions stay `Queued`.
+- The outbox can publish dispatches to Kafka and the optional consumer can store them in the inbox, but an execution worker is not yet implemented, so accepted executions stay `Queued`.

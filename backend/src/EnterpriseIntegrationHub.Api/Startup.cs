@@ -92,6 +92,9 @@ namespace EnterpriseIntegrationHub.Api
                     Configuration.GetSection(KafkaOptions.SectionName).Get<KafkaOptions>() ?? new KafkaOptions()));
             if (Configuration.GetValue<bool>($"{DispatchOutboxOptions.SectionName}:Enabled"))
                 services.AddHostedService<ExecutionDispatchOutboxWorker>();
+            services.AddScoped<IExecutionDispatchInboxWriter, ExecutionDispatchInboxWriter>();
+            services.AddScoped<ExecutionDispatchRecordProcessor>();
+            services.AddHostedService<ExecutionDispatchConsumerWorker>();
 
             // Cross-origin requests (adjust origins as needed)
             services.AddCors(options =>

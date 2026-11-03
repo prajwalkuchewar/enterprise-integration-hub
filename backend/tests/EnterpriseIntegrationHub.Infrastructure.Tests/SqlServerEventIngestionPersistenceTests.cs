@@ -3,10 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
+using Confluent.Kafka;
+using Confluent.Kafka.Admin;
+using EnterpriseIntegrationHub.Application.Features.Executions.DispatchOutbox;
 using EnterpriseIntegrationHub.Domain.Entities;
 using EnterpriseIntegrationHub.Domain.Enums;
 using EnterpriseIntegrationHub.Infrastructure.Persistence;
+using EnterpriseIntegrationHub.Infrastructure.Messaging.Kafka;
 using EnterpriseIntegrationHub.Infrastructure.Repositories;
 using FluentAssertions;
 using Microsoft.Data.SqlClient;
@@ -58,6 +63,109 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         accepted.Id.Should().Be(retryExecution.Id);
         (await CountAcceptedAsync(retry, source.ConnectorId)).Should().Be(new AcceptedRows(1, 1, 1));
     }
+
+    [Fact]
+    public async Task Inbox_WhenDispatchIsDeliveredConcurrently_StoresExactlyOneItem()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        var source = await SeedSourceAsync(database.Context);
+        var (receipt, execution, outbox) = Accept(source, SourceEventId);
+        await using (var context = database.CreateContext())
+            await new IntegrationExecutionRepository(context).CreateIfAbsentAsync(receipt, execution, outbox, default);
+        var message = Dispatch(execution, outbox);
+
+        var contexts = Enumerable.Range(0, 8).Select(_ => database.CreateContext()).ToList();
+        try
+        {
+            await Task.WhenAll(contexts.Select(context => new ExecutionDispatchInboxWriter(context).StoreAsync(message, default)));
+            await using var verify = database.CreateContext();
+            var stored = await verify.ExecutionDispatchInbox.SingleAsync();
+            stored.DispatchId.Should().Be(outbox.Id);
+            stored.IntegrationExecutionId.Should().Be(execution.Id);
+        }
+        finally
+        {
+            foreach (var context in contexts)
+                await context.DisposeAsync();
+        }
+    }
+
+    [KafkaIntegrationFact]
+    public async Task Kafka_RedeliveredDispatch_IsDurablyStoredBeforeOffsetsAreCommitted()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        var source = await SeedSourceAsync(database.Context);
+        var (receipt, execution, outbox) = Accept(source, SourceEventId);
+        await using (var context = database.CreateContext())
+            await new IntegrationExecutionRepository(context).CreateIfAbsentAsync(receipt, execution, outbox, default);
+
+        var bootstrap = Environment.GetEnvironmentVariable("EIH_KAFKA_TEST_BOOTSTRAP")!;
+        var topic = $"eih-test-dispatch-{Guid.NewGuid():N}";
+        var group = $"eih-test-consumer-{Guid.NewGuid():N}";
+        using var admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = bootstrap }).Build();
+        await admin.CreateTopicsAsync([new TopicSpecification { Name = topic, NumPartitions = 1, ReplicationFactor = 1 }]);
+        try
+        {
+            var message = Dispatch(execution, outbox);
+            using var publisher = new KafkaExecutionDispatchPublisher(new KafkaOptions
+            {
+                BootstrapServers = bootstrap,
+                ExecutionDispatchTopic = topic
+            });
+            await publisher.PublishAsync(message, default);
+            await publisher.PublishAsync(message, default);
+
+            using var consumer = new ConsumerBuilder<string, string>(new ConsumerConfig
+            {
+                BootstrapServers = bootstrap,
+                GroupId = group,
+                EnableAutoCommit = false,
+                EnableAutoOffsetStore = false,
+                AutoOffsetReset = AutoOffsetReset.Earliest
+            }).Build();
+            consumer.Subscribe(topic);
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            for (var index = 0; index < 2; index++)
+            {
+                var record = consumer.Consume(timeout.Token);
+                await using var context = database.CreateContext();
+                await new ExecutionDispatchRecordProcessor(new ExecutionDispatchInboxWriter(context))
+                    .ProcessAsync(record, consumer, timeout.Token);
+            }
+
+            await using var verify = database.CreateContext();
+            (await verify.ExecutionDispatchInbox.CountAsync()).Should().Be(1);
+            var committed = consumer.Committed([new TopicPartition(topic, 0)], TimeSpan.FromSeconds(10));
+            committed.Single().Offset.Value.Should().Be(2);
+            consumer.Close();
+        }
+        finally
+        {
+            await admin.DeleteTopicsAsync([topic]);
+        }
+    }
+
+    [Fact]
+    public async Task Inbox_WhenDispatchDoesNotMatchExecution_RejectsWithoutStoring()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        var source = await SeedSourceAsync(database.Context);
+        var (receipt, execution, outbox) = Accept(source, SourceEventId);
+        await using (var context = database.CreateContext())
+            await new IntegrationExecutionRepository(context).CreateIfAbsentAsync(receipt, execution, outbox, default);
+
+        await using var consumer = database.CreateContext();
+        await new ExecutionDispatchInboxWriter(consumer).StoreAsync(Dispatch(execution, outbox), default);
+        var message = Dispatch(execution, outbox) with { CorrelationId = "unexpected" };
+        var act = () => new ExecutionDispatchInboxWriter(consumer).StoreAsync(message, default);
+        await act.Should().ThrowAsync<System.IO.InvalidDataException>();
+        (await consumer.ExecutionDispatchInbox.CountAsync()).Should().Be(1);
+    }
+
+    private static ExecutionDispatchMessage Dispatch(IntegrationExecution execution, ExecutionDispatchOutbox outbox) =>
+        new(outbox.Id, 1, execution.Id, execution.WorkflowId, execution.WorkflowRevisionNumber,
+            execution.SourceConnectorId, execution.SourceEventId, execution.TriggerEvent,
+            execution.OccurredAt, execution.CorrelationId);
 
     [Fact]
     public async Task CreateIfAbsent_PersistsPayloadAndSchemaVersionWithExecution()

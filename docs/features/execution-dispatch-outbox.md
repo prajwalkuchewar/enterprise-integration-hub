@@ -4,14 +4,15 @@ Accepted events create an `IntegrationExecution` and an `ExecutionDispatchOutbox
 
 ## How it works
 
-1. The worker polls every `Outbox:PollInterval`.
+1. The worker polls every `Outbox:PollIntervalSeconds`.
 2. It claims up to `Outbox:BatchSize` dispatchable rows in one transaction. Claims use `UPDLOCK, READPAST`, so concurrent API instances never claim the same row. Each claim sets `LeaseOwner` and `LeaseExpiresAt`.
 3. The lease commits before publishing, so no database transaction is held during Kafka calls.
-4. Each row is published to the `Kafka:Topic` topic. The key is the execution ID. Headers are `dispatch-id`, `correlation-id`, and `event-type`.
+4. Each row is published to the `Kafka:ExecutionDispatchTopic` topic. The key is the execution ID. Headers are `dispatch-id`, `correlation-id`, and `event-type`.
 5. On success the row is marked dispatched. Every update checks the lease owner, so a worker whose lease expired cannot overwrite a newer claim.
 6. On failure the row records `LastError`, increments `AttemptCount`, and sets `NextAttemptAt` using capped exponential backoff. After `MaxAttempts` the row is dead-lettered (`DeadLetteredAt`).
 
 Delivery is at-least-once. A crash between publish and mark can publish a message twice, so consumers must be idempotent on `dispatch-id` or `executionId`.
+The optional [consumer](execution-dispatch-consumer.md) stores each dispatch in an idempotent inbox; an execution worker is still required to process that work.
 
 ## Configuration
 
