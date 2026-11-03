@@ -168,6 +168,6 @@ Limits: numeric formatting such as `1.0` versus `1` is significant because the r
 
 Status
 
-Accepted. Source mismatch and invalid keys both return 401. Whether mismatch should be 403 is still open.
+Accepted. Missing or unknown ingestion keys return 401. A valid key submitting an event for a different source system returns 403, because the caller is authenticated but not authorized for that source.
 
 ---

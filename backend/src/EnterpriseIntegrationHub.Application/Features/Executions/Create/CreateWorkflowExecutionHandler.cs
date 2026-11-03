@@ -39,6 +39,7 @@ public sealed class CreateWorkflowExecutionHandler(
             command.EventFingerprint,
             steps);
         var createdOrExisting = await executionRepository.CreateIfAbsentAsync(
+            new EventReceipt(execution),
             execution,
             new ExecutionDispatchOutbox(execution.Id),
             cancellationToken);

@@ -43,7 +43,8 @@ Content-Type: application/json
 | `202 Accepted` | New event recorded. Body includes `executionId`, `status`, `alreadyAccepted: false`. |
 | `200 OK` | The same event (same content) was already accepted. No new execution is created. |
 | `400 Bad Request` | Invalid envelope, for example a missing `eventId` or a payload that is not a JSON object. |
-| `401 Unauthorized` | Missing or unknown key, or `sourceSystem` does not match the external system that owns the key. |
+| `401 Unauthorized` | Missing or unknown ingestion key. |
+| `403 Forbidden` | Authenticated key is valid, but `sourceSystem` does not match the external system that owns the key. |
 | `404 Not Found` | No active workflow is triggered by this `eventType` for the connector. |
 | `409 Conflict` | The connector is not Active, or the `eventId` was reused with different content. |
 

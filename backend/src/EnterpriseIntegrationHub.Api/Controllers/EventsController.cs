@@ -22,7 +22,8 @@ public sealed class EventsController(IngestEventHandler ingestEventHandler) : Co
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>
     /// 202 Accepted for a new event, 200 OK when the same event content was already accepted,
-    /// 400 for invalid envelopes, 401 for missing or unknown keys, 404 when no workflow matches, and 409 when the event ID was reused with different content.
+    /// 400 for invalid envelopes, 401 for missing or unknown keys, 403 when the key is valid but not authorized for the event's source system,
+    /// 404 when no workflow matches, and 409 when the event ID was reused with different content.
     /// </returns>
     [HttpPost]
     [Consumes("application/json")]
@@ -30,6 +31,7 @@ public sealed class EventsController(IngestEventHandler ingestEventHandler) : Co
     [ProducesResponseType(StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Ingest(

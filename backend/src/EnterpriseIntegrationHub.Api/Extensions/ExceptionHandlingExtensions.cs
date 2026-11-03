@@ -1,3 +1,4 @@
+using EnterpriseIntegrationHub.Application.Security;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +18,7 @@ internal static class ExceptionHandlingExtensions
                     ArgumentException => CreateProblem(StatusCodes.Status400BadRequest, "Invalid request", exception.Message),
                     KeyNotFoundException => CreateProblem(StatusCodes.Status404NotFound, "Resource not found", exception.Message),
                     UnauthorizedAccessException => CreateProblem(StatusCodes.Status401Unauthorized, "Unauthorized", exception.Message),
+                    ForbiddenAccessException => CreateProblem(StatusCodes.Status403Forbidden, "Forbidden", exception.Message),
                     InvalidOperationException => CreateProblem(StatusCodes.Status409Conflict, "Operation conflicts with the current state", exception.Message),
                     _ => CreateProblem(StatusCodes.Status500InternalServerError, "An unexpected error occurred", "An unexpected error occurred.")
                 };
