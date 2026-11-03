@@ -2,7 +2,7 @@
 
 The optional Kafka consumer validates each dispatch and stores a durable inbox row before committing its Kafka offset. The stored dispatch and execution must match the database's outbox and execution metadata. The dispatch ID and execution ID are unique in the inbox, so redelivery, concurrent consumers, and a crash after storage but before offset commit do not create duplicate work.
 
-The inbox is a handoff, not an execution worker. No destination is invoked by this slice, and a stored dispatch does not mean that an execution succeeded. The future worker must claim inbox work safely, handle old receipts without payloads explicitly, and implement step execution and recovery.
+The inbox is a handoff, not an execution worker. No destination is invoked by this slice, and a stored dispatch does not mean that an execution succeeded. A [lease primitive](execution-worker-leases.md) supports worker ownership; the future worker must handle old receipts without payloads explicitly and implement fenced step execution and recovery.
 
 ## Configuration and operation
 

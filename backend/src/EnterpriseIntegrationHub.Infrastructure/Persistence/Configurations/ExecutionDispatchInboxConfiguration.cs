@@ -13,6 +13,8 @@ public sealed class ExecutionDispatchInboxConfiguration : IEntityTypeConfigurati
         builder.Property(item => item.DispatchId).ValueGeneratedNever();
         builder.Property(item => item.ReceivedAt).IsRequired();
         builder.HasIndex(item => item.IntegrationExecutionId).IsUnique();
+        builder.HasIndex(item => item.LeaseToken).IsUnique().HasFilter("[LeaseToken] IS NOT NULL");
+        builder.HasIndex(item => new { item.CompletedAt, item.AvailableAt, item.LeaseExpiresAt });
         builder.HasOne<ExecutionDispatchOutbox>().WithMany().HasForeignKey(item => item.DispatchId).OnDelete(DeleteBehavior.NoAction);
         builder.HasOne<IntegrationExecution>().WithMany().HasForeignKey(item => item.IntegrationExecutionId).OnDelete(DeleteBehavior.NoAction);
     }
