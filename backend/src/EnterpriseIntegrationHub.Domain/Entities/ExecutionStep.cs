@@ -37,26 +37,28 @@ public sealed class ExecutionStep
     public DateTimeOffset? NextAttemptAt { get; private set; }
     public ICollection<ExecutionStepAttempt> Attempts { get; private set; } = new List<ExecutionStepAttempt>();
 
-    public ExecutionStepAttempt StartAttempt()
+    internal ExecutionStepAttempt StartAttempt(DateTimeOffset now)
     {
         if (Status is not (ExecutionStepStatus.Pending or ExecutionStepStatus.RetryScheduled))
             throw new InvalidOperationException("Only a pending or retry-scheduled step can start an attempt.");
+        if (Status == ExecutionStepStatus.RetryScheduled && (NextAttemptAt is null || NextAttemptAt > now))
+            throw new InvalidOperationException("A retry-scheduled step cannot start before its retry time.");
 
-        var attempt = new ExecutionStepAttempt(Id, Attempts.Count + 1);
+        var attempt = new ExecutionStepAttempt(Id, Attempts.Count + 1, now);
         Attempts.Add(attempt);
         Status = ExecutionStepStatus.Running;
         NextAttemptAt = null;
         return attempt;
     }
 
-    public void MarkSucceeded()
+    internal void MarkSucceeded()
     {
         var attempt = GetRunningAttempt();
         attempt.Succeed();
         Status = ExecutionStepStatus.Succeeded;
     }
 
-    public void MarkFailed(string failureCode, string failureMessage, DateTimeOffset? retryAt)
+    internal void MarkFailed(string failureCode, string failureMessage, DateTimeOffset? retryAt)
     {
         var attempt = GetRunningAttempt();
         attempt.Fail(failureCode, failureMessage);
@@ -64,7 +66,7 @@ public sealed class ExecutionStep
         NextAttemptAt = retryAt;
     }
 
-    public void MarkSkipped()
+    internal void MarkSkipped()
     {
         if (Status is not (ExecutionStepStatus.Pending or ExecutionStepStatus.RetryScheduled))
             throw new InvalidOperationException("Only a pending or retry-scheduled step can be skipped.");

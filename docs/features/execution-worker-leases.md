@@ -6,4 +6,6 @@ Release may set an availability time for future scheduling. Completion also requ
 
 This is an ownership primitive, not a running execution worker. The worker must fence execution and step state changes transactionally against the lease, renew or cancel long-running work safely, recover interrupted attempts, and ensure the lease remains valid before starting an external call. A lease does not by itself prevent an external destination from processing a request after a lease expires or a network failure becomes ambiguous. Stable step idempotency keys and destination support are still required; exactly-once side effects cannot be guaranteed.
 
+Attempt creation and outcome changes are routed through the execution aggregate: steps run in order, successful steps cannot be restarted, and a scheduled retry cannot start before its due time. These domain rules do not replace the required transactional lease fencing.
+
 SQL Server integration tests cover concurrent claims (including read-committed snapshot isolation), expiry and reclaim, stale-token fencing, delayed release, renewal, completion and input validation.
