@@ -1,5 +1,12 @@
 # Root ignore rules for a .NET + Angular monorepo
 
+# Documentation is local only, except for the root README.
+docs/
+*.[mM][dD]
+*.[mM][dD][xX]
+*.[mM][aA][rR][kK][dD][oO][wW][nN]
+!/README.md
+
 # OS files
 .DS_Store
 Thumbs.db

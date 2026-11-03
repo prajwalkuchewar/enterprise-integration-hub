@@ -8,8 +8,9 @@ An integration management workspace built as a monorepo. The backend is an ASP.N
 backend/       ASP.NET Core API, application/domain/infrastructure projects, tests
 frontend/      Angular workspace and web application
 infrastructure/ Docker Compose services for local development
-docs/          Product, architecture, and feature notes
 ```
+
+Detailed documentation may be kept locally in `docs/`; it is not included in the repository.
 
 ## Start the application locally
 
