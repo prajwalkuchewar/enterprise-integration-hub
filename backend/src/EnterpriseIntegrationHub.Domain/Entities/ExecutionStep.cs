@@ -51,17 +51,17 @@ public sealed class ExecutionStep
         return attempt;
     }
 
-    internal void MarkSucceeded()
+    internal void MarkSucceeded(DateTimeOffset now)
     {
         var attempt = GetRunningAttempt();
-        attempt.Succeed();
+        attempt.Succeed(now);
         Status = ExecutionStepStatus.Succeeded;
     }
 
-    internal void MarkFailed(string failureCode, string failureMessage, DateTimeOffset? retryAt)
+    internal void MarkFailed(string failureCode, string failureMessage, DateTimeOffset? retryAt, DateTimeOffset now)
     {
         var attempt = GetRunningAttempt();
-        attempt.Fail(failureCode, failureMessage);
+        attempt.Fail(failureCode, failureMessage, now);
         Status = retryAt.HasValue ? ExecutionStepStatus.RetryScheduled : ExecutionStepStatus.Failed;
         NextAttemptAt = retryAt;
     }

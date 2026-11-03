@@ -139,6 +139,12 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("DispatchId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("ActiveAttemptId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ActiveAttemptLeaseToken")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTimeOffset?>("AvailableAt")
                         .HasColumnType("datetimeoffset");
 
@@ -159,6 +165,8 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
 
                     b.HasKey("DispatchId");
 
+                    b.HasIndex("ActiveAttemptId");
+
                     b.HasIndex("IntegrationExecutionId")
                         .IsUnique();
 
@@ -168,7 +176,10 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("CompletedAt", "AvailableAt", "LeaseExpiresAt");
 
-                    b.ToTable("ExecutionDispatchInbox", (string)null);
+                    b.ToTable("ExecutionDispatchInbox", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ExecutionDispatchInbox_ActiveAttempt", "([ActiveAttemptId] IS NULL AND [ActiveAttemptLeaseToken] IS NULL) OR ([ActiveAttemptId] IS NOT NULL AND [ActiveAttemptLeaseToken] IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionDispatchOutbox", b =>
@@ -590,6 +601,11 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionDispatchInbox", b =>
                 {
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.ExecutionStepAttempt", null)
+                        .WithMany()
+                        .HasForeignKey("ActiveAttemptId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("EnterpriseIntegrationHub.Domain.Entities.ExecutionDispatchOutbox", null)
                         .WithMany()
                         .HasForeignKey("DispatchId")
