@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text.Json;
 using System.Threading.Tasks;
 using EnterpriseIntegrationHub.Domain.Entities;
 using EnterpriseIntegrationHub.Domain.Enums;
@@ -10,6 +11,8 @@ using EnterpriseIntegrationHub.Infrastructure.Repositories;
 using FluentAssertions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Xunit;
 
 namespace EnterpriseIntegrationHub.Infrastructure.Tests;
@@ -54,6 +57,51 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
 
         accepted.Id.Should().Be(retryExecution.Id);
         (await CountAcceptedAsync(retry, source.ConnectorId)).Should().Be(new AcceptedRows(1, 1, 1));
+    }
+
+    [Fact]
+    public async Task CreateIfAbsent_PersistsPayloadAndSchemaVersionWithExecution()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        var source = await SeedSourceAsync(database.Context);
+        var (_, execution, outbox) = Accept(source, SourceEventId);
+        var largeValue = new string('x', 5000);
+        using var submittedPayload = JsonDocument.Parse(JsonSerializer.Serialize(new { nested = new { amount = 42, value = largeValue } }));
+        var receipt = new EventReceipt(execution, 2, submittedPayload.RootElement);
+
+        await using (var context = database.CreateContext())
+            await new IntegrationExecutionRepository(context).CreateIfAbsentAsync(receipt, execution, outbox, default);
+
+        await using var verify = database.CreateContext();
+        var persisted = await verify.EventReceipts.SingleAsync(item => item.IntegrationExecutionId == execution.Id);
+        persisted.SchemaVersion.Should().Be(2);
+        using var payload = JsonDocument.Parse(persisted.PayloadJson!);
+        payload.RootElement.GetProperty("nested").GetProperty("amount").GetInt32().Should().Be(42);
+        payload.RootElement.GetProperty("nested").GetProperty("value").GetString().Should().Be(largeValue);
+        (await CountAcceptedAsync(verify, source.ConnectorId)).Should().Be(new AcceptedRows(1, 1, 1));
+    }
+
+    [Fact]
+    public async Task PayloadMigration_LeavesLegacyReceiptsWithoutFabricatedPayload()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        var source = await SeedSourceAsync(database.Context);
+        var (receipt, execution, outbox) = Accept(source, SourceEventId);
+        await using (var context = database.CreateContext())
+            await new IntegrationExecutionRepository(context).CreateIfAbsentAsync(receipt, execution, outbox, default);
+
+        await using (var migrationContext = database.CreateContext())
+        {
+            var migrator = migrationContext.GetService<IMigrator>();
+            await migrator.MigrateAsync("20261103135643_AddEventReceipts");
+            await migrator.MigrateAsync();
+        }
+
+        await using var verify = database.CreateContext();
+        var legacyReceipt = await verify.EventReceipts.SingleAsync(item => item.IntegrationExecutionId == execution.Id);
+        legacyReceipt.PayloadJson.Should().BeNull();
+        legacyReceipt.SchemaVersion.Should().BeNull();
+        (await CountAcceptedAsync(verify, source.ConnectorId)).Should().Be(new AcceptedRows(1, 1, 1));
     }
 
     [Fact]
@@ -137,7 +185,8 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
     {
         var fingerprint = Convert.ToHexString(SHA256.HashData(Guid.NewGuid().ToByteArray()));
         var execution = new IntegrationExecution(source.Revision, source.ConnectorId, eventId, DateTimeOffset.UtcNow, "corr-1", fingerprint, source.Steps);
-        return (new EventReceipt(execution), execution, new ExecutionDispatchOutbox(execution.Id));
+        using var payload = JsonDocument.Parse("{\"nested\":{\"amount\":42}}");
+        return (new EventReceipt(execution, 2, payload.RootElement), execution, new ExecutionDispatchOutbox(execution.Id));
     }
 
     private static async Task<AcceptedRows> CountAcceptedAsync(EnterpriseIntegrationHubDbContext context, Guid connectorId) => new(

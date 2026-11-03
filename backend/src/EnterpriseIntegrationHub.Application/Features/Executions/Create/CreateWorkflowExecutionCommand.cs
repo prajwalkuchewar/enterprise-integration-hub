@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace EnterpriseIntegrationHub.Application.Features.Executions.Create;
 
 public sealed record CreateWorkflowExecutionCommand(
@@ -6,4 +8,6 @@ public sealed record CreateWorkflowExecutionCommand(
     string TriggerEvent,
     DateTimeOffset OccurredAt,
     string? CorrelationId,
-    string EventFingerprint);
+    string EventFingerprint,
+    int SchemaVersion,
+    JsonElement Payload);
