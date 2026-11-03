@@ -78,12 +78,29 @@ public sealed class IntegrationExecution : BaseEntity
     public IntegrationExecutionStatus Status { get; private set; }
     public ICollection<ExecutionStep> Steps { get; private set; } = new List<ExecutionStep>();
 
-    public void Start()
+    public void Start() => Start(DateTimeOffset.UtcNow);
+
+    public void Start(DateTimeOffset now)
     {
+        if (now == default)
+            throw new ArgumentException("A start time must be provided.", nameof(now));
         if (Status is not (IntegrationExecutionStatus.Queued or IntegrationExecutionStatus.RetryScheduled))
             throw new InvalidOperationException("Only a queued or retry-scheduled execution can start.");
+        if (Status == IntegrationExecutionStatus.RetryScheduled &&
+            !Steps.Any(step => step.Status == ExecutionStepStatus.RetryScheduled && step.NextAttemptAt <= now))
+            throw new InvalidOperationException("A retry-scheduled execution cannot start before its retry time.");
         Status = IntegrationExecutionStatus.Running;
-        StartedAt ??= DateTimeOffset.UtcNow;
+        StartedAt ??= now;
+    }
+
+    public ExecutionStepAttempt StartStepAttempt(int executionOrder) => StartStepAttempt(executionOrder, DateTimeOffset.UtcNow);
+
+    public ExecutionStepAttempt StartStepAttempt(int executionOrder, DateTimeOffset now)
+    {
+        if (now == default)
+            throw new ArgumentException("A start time must be provided.", nameof(now));
+        EnsureRunning();
+        return GetCurrentStep(executionOrder).StartAttempt(now);
     }
 
     public void MarkStepSucceeded(int executionOrder)

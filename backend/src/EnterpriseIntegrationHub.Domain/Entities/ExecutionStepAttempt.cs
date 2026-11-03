@@ -6,13 +6,13 @@ public sealed class ExecutionStepAttempt
 {
     private ExecutionStepAttempt() { }
 
-    internal ExecutionStepAttempt(Guid executionStepId, int attemptNumber)
+    internal ExecutionStepAttempt(Guid executionStepId, int attemptNumber, DateTimeOffset startedAt)
     {
         Id = Guid.NewGuid();
         ExecutionStepId = executionStepId;
         AttemptNumber = attemptNumber;
         Status = ExecutionStepAttemptStatus.Running;
-        StartedAt = DateTimeOffset.UtcNow;
+        StartedAt = startedAt;
     }
 
     public Guid Id { get; private set; }
