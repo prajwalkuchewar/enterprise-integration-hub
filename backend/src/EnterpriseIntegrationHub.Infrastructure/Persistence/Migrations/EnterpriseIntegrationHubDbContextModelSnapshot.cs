@@ -134,6 +134,25 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.ToTable("EventReceipts", (string)null);
                 });
 
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionDispatchInbox", b =>
+                {
+                    b.Property<Guid>("DispatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("IntegrationExecutionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("ReceivedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("DispatchId");
+
+                    b.HasIndex("IntegrationExecutionId")
+                        .IsUnique();
+
+                    b.ToTable("ExecutionDispatchInbox", (string)null);
+                });
+
             modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionDispatchOutbox", b =>
                 {
                     b.Property<Guid>("Id")
@@ -548,6 +567,21 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("SourceConnectorId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionDispatchInbox", b =>
+                {
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.ExecutionDispatchOutbox", null)
+                        .WithMany()
+                        .HasForeignKey("DispatchId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.IntegrationExecution", null)
+                        .WithMany()
+                        .HasForeignKey("IntegrationExecutionId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
                 });
 
