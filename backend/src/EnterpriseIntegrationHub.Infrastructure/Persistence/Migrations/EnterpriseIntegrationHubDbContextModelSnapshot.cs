@@ -134,6 +134,54 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.ToTable("EventReceipts", (string)null);
                 });
 
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionDispatchInbox", b =>
+                {
+                    b.Property<Guid>("DispatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ActiveAttemptId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ActiveAttemptLeaseToken")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("AvailableAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("IntegrationExecutionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("LeaseExpiresAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("LeaseToken")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("ReceivedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("DispatchId");
+
+                    b.HasIndex("ActiveAttemptId");
+
+                    b.HasIndex("IntegrationExecutionId")
+                        .IsUnique();
+
+                    b.HasIndex("LeaseToken")
+                        .IsUnique()
+                        .HasFilter("[LeaseToken] IS NOT NULL");
+
+                    b.HasIndex("CompletedAt", "AvailableAt", "LeaseExpiresAt");
+
+                    b.ToTable("ExecutionDispatchInbox", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ExecutionDispatchInbox_ActiveAttempt", "([ActiveAttemptId] IS NULL AND [ActiveAttemptLeaseToken] IS NULL) OR ([ActiveAttemptId] IS NOT NULL AND [ActiveAttemptLeaseToken] IS NOT NULL)");
+                        });
+                });
+
             modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionDispatchOutbox", b =>
                 {
                     b.Property<Guid>("Id")
@@ -548,6 +596,26 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("SourceConnectorId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EnterpriseIntegrationHub.Domain.Entities.ExecutionDispatchInbox", b =>
+                {
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.ExecutionStepAttempt", null)
+                        .WithMany()
+                        .HasForeignKey("ActiveAttemptId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.ExecutionDispatchOutbox", null)
+                        .WithMany()
+                        .HasForeignKey("DispatchId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EnterpriseIntegrationHub.Domain.Entities.IntegrationExecution", null)
+                        .WithMany()
+                        .HasForeignKey("IntegrationExecutionId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
                 });
 
