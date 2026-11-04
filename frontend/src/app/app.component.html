@@ -44,6 +44,10 @@
         <div class="alert alert-error" role="alert"><span class="alert-symbol">!</span><span>{{ apiError }}</span><button type="button" (click)="refresh()">Retry</button><button class="alert-close" type="button" aria-label="Dismiss" (click)="apiError = ''">×</button></div>
       }
 
+      @if (issuedKey) {
+        <div class="alert alert-success" role="status"><span class="alert-symbol">✓</span><span><strong>Ingestion key issued. It is shown only once, so copy it now.</strong><br><code>{{ issuedKey.ingestionKey }}</code></span><button class="alert-close" type="button" aria-label="Dismiss key" (click)="dismissIssuedKey()">×</button></div>
+      }
+
       @if (section === 'dashboard') {
         <section class="page-heading dashboard-heading">
           <div><div class="eyebrow">{{ todayLabel }}</div><h1>Good morning, Admin <span class="wave">✳</span></h1><p>Here’s what’s happening across your integration landscape.</p></div>
@@ -115,7 +119,7 @@
           @else if (filteredConnectors.length === 0) { <div class="empty-state"><div class="empty-art">⤳</div><strong>{{ search ? 'No connectors match your search' : 'No connectors configured' }}</strong><span>{{ search ? 'Try another name, URL, or system.' : 'Create a connector to configure an endpoint for an active system.' }}</span>@if (!search) { <button class="button button-secondary" type="button" [disabled]="activeSystemOptions.length === 0" (click)="openCreate('connector')">Create a connector</button>@if (activeSystemOptions.length === 0) { <small class="helper-text">Register and activate an external system first.</small> } }</div> }
           @else { <div class="table-scroll"><table><thead><tr><th>CONNECTOR</th><th>EXTERNAL SYSTEM</th><th>PROTOCOL</th><th>AUTHENTICATION</th><th>STATUS</th><th></th></tr></thead><tbody>
             @for (connector of filteredConnectors; track connector.id) {
-              <tr><td><div class="connector-cell"><span class="connector-mark">↗</span><span><strong>{{ connector.name }}</strong><small>{{ connector.baseUrl }}</small></span></div></td><td>{{ systemName(connector.externalSystemId) }}</td><td><span class="protocol-tag">{{ protocolLabel(connector.protocol) }}</span></td><td>{{ authenticationLabel(connector.authenticationType) }}</td><td><span class="status-pill" [ngClass]="statusClass(statusLabel('connector', connector.status))"><i></i>{{ statusLabel('connector', connector.status) }}</span></td><td><div class="row-actions"><button type="button" class="action-link" (click)="editConnector(connector)">Edit</button>@if (connector.status === 1 || connector.status === 2) { <button type="button" class="action-link" (click)="toggleConnector(connector)">{{ connector.status === 2 ? 'Deactivate' : 'Activate' }}</button> }</div></td></tr>
+              <tr><td><div class="connector-cell"><span class="connector-mark">↗</span><span><strong>{{ connector.name }}</strong><small>{{ connector.baseUrl }}</small></span></div></td><td>{{ systemName(connector.externalSystemId) }}</td><td><span class="protocol-tag">{{ protocolLabel(connector.protocol) }}</span></td><td>{{ authenticationLabel(connector.authenticationType) }}</td><td><span class="status-pill" [ngClass]="statusClass(statusLabel('connector', connector.status))"><i></i>{{ statusLabel('connector', connector.status) }}</span></td><td><div class="row-actions"><button type="button" class="action-link" (click)="editConnector(connector)">Edit</button><button type="button" class="action-link" (click)="toggleConnector(connector)">{{ connector.status === 2 ? 'Deactivate' : 'Activate' }}</button>@if (connector.status === 2) { <button type="button" class="action-link" (click)="issueIngestionKey(connector)">Ingestion key</button> }</div></td></tr>
             }
           </tbody></table></div> }
         </section>

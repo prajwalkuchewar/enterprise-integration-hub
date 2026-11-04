@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
-  Connector, ConnectorRequest, ExternalSystem, ExternalSystemRequest, ListResponse,
-  Workflow, WorkflowDetails, WorkflowRequest
+  Connector, ConnectorRequest, ExternalSystem, ExternalSystemRequest, IssuedIngestionKey,
+  ListResponse, Workflow, WorkflowDetails, WorkflowRequest
 } from './models';
 
 @Injectable({ providedIn: 'root' })
@@ -41,6 +41,10 @@ export class HubApiService {
 
   setConnectorActive(id: string, active: boolean): Observable<void> {
     return this.http.post<void>(`${this.root}/connectors/${id}/${active ? 'activate' : 'deactivate'}`, {});
+  }
+
+  issueIngestionKey(id: string): Observable<IssuedIngestionKey> {
+    return this.http.post<IssuedIngestionKey>(`${this.root}/connectors/${id}/ingestion-key`, {});
   }
 
   getWorkflows(): Observable<ListResponse<Workflow>> {

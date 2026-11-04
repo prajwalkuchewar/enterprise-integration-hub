@@ -7,7 +7,7 @@ import { filter } from 'rxjs';
 import { HubApiService } from './hub-api.service';
 import {
   authenticationLabel, authenticationTypes, Connector, ConnectorRequest, environments,
-  environmentLabel, ExternalSystem, ExternalSystemRequest, protocols, protocolLabel,
+  environmentLabel, ExternalSystem, ExternalSystemRequest, IssuedIngestionKey, protocols, protocolLabel,
   statusLabel, Workflow, WorkflowDetails, WorkflowRequest, WorkflowStep
 } from './models';
 
@@ -46,6 +46,7 @@ export class AppComponent implements OnInit, AfterViewChecked {
   search = '';
   notice = '';
   apiError = '';
+  issuedKey: IssuedIngestionKey | null = null;
 
   systemForm: ExternalSystemRequest = { name: '', description: '', environment: 1 };
   connectorForm: ConnectorRequest = {
@@ -298,6 +299,17 @@ export class AppComponent implements OnInit, AfterViewChecked {
       next: () => { this.toast(`Connector ${connector.status === 2 ? 'deactivated' : 'activated'}.`); this.refresh(); },
       error: (error: unknown) => this.apiError = this.errorMessage(error)
     });
+  }
+
+  issueIngestionKey(connector: Connector): void {
+    this.api.issueIngestionKey(connector.id).subscribe({
+      next: (issued) => { this.issuedKey = issued; this.apiError = ''; },
+      error: (error: unknown) => this.apiError = this.errorMessage(error)
+    });
+  }
+
+  dismissIssuedKey(): void {
+    this.issuedKey = null;
   }
 
   activateWorkflow(workflow: Workflow): void {
