@@ -41,6 +41,11 @@ export interface WorkflowStep {
   executionOrder: number;
 }
 
+export interface IssuedIngestionKey {
+  connectorId: string;
+  ingestionKey: string;
+}
+
 export interface ExternalSystemRequest {
   name: string;
   description: string;

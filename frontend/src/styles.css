@@ -185,6 +185,8 @@ td:first-child { padding-left: 5px; }
 
 .alert { display: flex; align-items: center; gap: 9px; margin-bottom: 17px; padding: 10px 12px; border: 1px solid #f3d9d6; border-radius: 6px; font-size: 10px; }
 .alert-error { color: #a34a44; background: #fff8f7; }
+.alert-success { color: #2f6b4a; background: #f5fbf7; border-color: #cfe8d9; }
+.alert-success code { word-break: break-all; font-size: 10px; }
 .alert-symbol { display: grid; flex: 0 0 auto; width: 17px; height: 17px; place-items: center; border-radius: 50%; color: #fff; background: #dc756c; font-size: 10px; font-weight: 700; }
 .alert > span:nth-child(2) { flex: 1; }
 .alert > button:not(.alert-close) { border: 0; color: #9d514b; background: transparent; cursor: pointer; font-size: 9px; font-weight: 700; }
