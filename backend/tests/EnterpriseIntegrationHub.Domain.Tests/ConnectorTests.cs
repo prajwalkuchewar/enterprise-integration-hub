@@ -9,6 +9,30 @@ namespace EnterpriseIntegrationHub.Domain.Tests;
 public class ConnectorTests
 {
     [Fact]
+    public void HttpMethod_DefaultsToPost_AndChangingItRedraftsActiveConnector()
+    {
+        var connector = CreateConnector(status: ConnectorStatus.Active);
+        connector.HttpMethod.Should().Be(ConnectorHttpMethod.Post);
+        connector.UpdateCommunication(connector.BaseUrl, connector.Protocol, connector.AuthenticationType,
+            connector.TimeoutSeconds, ConnectorHttpMethod.Put).Should().BeTrue();
+        connector.HttpMethod.Should().Be(ConnectorHttpMethod.Put);
+        connector.Status.Should().Be(ConnectorStatus.Draft);
+        connector.UpdateCommunication(connector.BaseUrl, connector.Protocol, connector.AuthenticationType,
+            connector.TimeoutSeconds).Should().BeFalse();
+        connector.HttpMethod.Should().Be(ConnectorHttpMethod.Put);
+    }
+
+    [Fact]
+    public void HttpMethod_RejectsUndefinedValues()
+    {
+        var connector = CreateConnector();
+        var action = () => connector.UpdateCommunication(connector.BaseUrl, connector.Protocol,
+            connector.AuthenticationType, connector.TimeoutSeconds, (ConnectorHttpMethod)99);
+        action.Should().Throw<ArgumentOutOfRangeException>();
+        connector.HttpMethod.Should().Be(ConnectorHttpMethod.Post);
+    }
+
+    [Fact]
     public void Constructor_WithValidParameters_CreatesConnectorWithCorrectProperties()
     {
         // Arrange

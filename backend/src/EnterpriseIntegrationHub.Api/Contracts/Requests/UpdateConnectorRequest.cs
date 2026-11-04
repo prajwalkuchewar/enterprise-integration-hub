@@ -31,4 +31,7 @@ public sealed class UpdateConnectorRequest
     /// <summary>Gets the request timeout in seconds.</summary>
     [Range(1, 3600)]
     public int TimeoutSeconds { get; init; }
+
+    /// <summary>Gets the optional destination HTTP method; omission preserves the current value.</summary>
+    public ConnectorHttpMethod? HttpMethod { get; init; }
 }

@@ -46,6 +46,9 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ExternalSystemId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("HttpMethod")
+                        .HasColumnType("int");
+
                     b.Property<string>("IngestionKeyHash")
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
@@ -245,6 +248,9 @@ namespace EnterpriseIntegrationHub.Infrastructure.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("ExecutionOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int>("HttpMethod")
                         .HasColumnType("int");
 
                     b.Property<Guid>("IntegrationExecutionId")

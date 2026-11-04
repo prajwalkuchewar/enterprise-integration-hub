@@ -559,6 +559,43 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
     }
 
     [Fact]
+    public async Task HttpMethodMigration_DefaultsExistingConnectorsAndStepsToPost()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        await QueueDispatchAsync(database);
+        await using (var migration = database.CreateContext())
+        {
+            var migrator = migration.GetService<IMigrator>();
+            await migrator.MigrateAsync("20261103180506_AddHttpAttemptDiagnostics");
+            await migrator.MigrateAsync();
+        }
+
+        await using var verify = database.CreateContext();
+        var connectors = await verify.Connectors.ToListAsync();
+        connectors.Should().NotBeEmpty().And.OnlyContain(connector => connector.HttpMethod == ConnectorHttpMethod.Post);
+        var steps = await verify.ExecutionSteps.ToListAsync();
+        steps.Should().NotBeEmpty().And.OnlyContain(step => step.HttpMethod == ConnectorHttpMethod.Post);
+    }
+
+    [Fact]
+    public async Task HttpMethodSnapshot_IsUnchangedWhenConnectorIsEditedAfterAcceptance()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        await QueueDispatchAsync(database);
+        await using var context = database.CreateContext();
+        var step = await context.ExecutionSteps.SingleAsync();
+        var connector = await context.Connectors.SingleAsync(item => item.Id == step.DestinationConnectorId);
+        connector.UpdateCommunication(connector.BaseUrl, connector.Protocol, connector.AuthenticationType,
+            connector.TimeoutSeconds, ConnectorHttpMethod.Put);
+        await context.SaveChangesAsync();
+
+        var lease = (await new ExecutionLeaseRepository(context).ClaimAsync(60, default))!;
+        var work = (await new ExecutionAttemptRepository(context).BeginAsync(lease, 3, default)).Work!;
+        work.HttpMethod.Should().Be(ConnectorHttpMethod.Post);
+        connector.HttpMethod.Should().Be(ConnectorHttpMethod.Put);
+    }
+
+    [Fact]
     public async Task ExecutionWorker_ExecutesMultipleStepsInOrderOutsideSqlTransactions()
     {
         await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);

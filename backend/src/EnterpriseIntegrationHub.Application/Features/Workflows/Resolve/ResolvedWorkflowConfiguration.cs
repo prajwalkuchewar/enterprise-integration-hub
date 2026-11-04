@@ -18,4 +18,5 @@ public sealed record ResolvedWorkflowStep(
     ConnectorProtocol Protocol,
     ConnectorAuthenticationType AuthenticationType,
     int TimeoutSeconds,
-    int ExecutionOrder);
+    int ExecutionOrder,
+    ConnectorHttpMethod HttpMethod = ConnectorHttpMethod.Post);

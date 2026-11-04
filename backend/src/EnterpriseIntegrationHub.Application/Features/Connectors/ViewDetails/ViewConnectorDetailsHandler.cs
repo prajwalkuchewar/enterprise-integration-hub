@@ -30,7 +30,8 @@ public sealed class ViewConnectorDetailsHandler
             Protocol: item.Protocol,
             AuthenticationType: item.AuthenticationType,
             TimeoutSeconds: item.TimeoutSeconds,
-            Status: item.Status);
+            Status: item.Status,
+            HttpMethod: item.HttpMethod);
 
         return details;
     }

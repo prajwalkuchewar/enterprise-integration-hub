@@ -15,6 +15,7 @@ public sealed class ExecutionStepConfiguration : IEntityTypeConfiguration<Execut
         builder.Property(step => step.Protocol).IsRequired().HasConversion<int>();
         builder.Property(step => step.AuthenticationType).IsRequired().HasConversion<int>();
         builder.Property(step => step.TimeoutSeconds).IsRequired();
+        builder.Property(step => step.HttpMethod).IsRequired().HasConversion<int>();
         builder.Property(step => step.ExecutionOrder).IsRequired();
         builder.Property(step => step.Status).IsRequired().HasConversion<int>();
         builder.Property(step => step.NextAttemptAt).IsRequired(false);

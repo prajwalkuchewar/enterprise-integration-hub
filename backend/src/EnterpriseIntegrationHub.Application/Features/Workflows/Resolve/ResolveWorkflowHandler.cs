@@ -37,7 +37,8 @@ public sealed class ResolveWorkflowHandler(IWorkflowRepository workflowRepositor
                 connector.Protocol,
                 connector.AuthenticationType,
                 connector.TimeoutSeconds,
-                step.ExecutionOrder));
+                step.ExecutionOrder,
+                connector.HttpMethod));
         }
 
         return new ResolvedWorkflowConfiguration(

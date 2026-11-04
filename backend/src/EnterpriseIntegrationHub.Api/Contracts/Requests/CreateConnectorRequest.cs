@@ -38,4 +38,8 @@ public sealed class CreateConnectorRequest
     [Required]
     [Range(1, 3600)]
     public int TimeoutSeconds { get; init; }
+
+    /// <summary>Gets the HTTP method for destination delivery; defaults to POST.</summary>
+    [DefinedEnum(typeof(ConnectorHttpMethod))]
+    public ConnectorHttpMethod HttpMethod { get; init; } = ConnectorHttpMethod.Post;
 }

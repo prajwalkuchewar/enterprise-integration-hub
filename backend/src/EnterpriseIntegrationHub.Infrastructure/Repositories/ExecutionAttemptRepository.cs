@@ -205,7 +205,7 @@ public sealed class ExecutionAttemptRepository(EnterpriseIntegrationHubDbContext
         new(BeginExecutionAttemptStatus.Ready, new ExecutionAttemptWork(
             execution.Id, step.Id, attempt.Id, attempt.AttemptNumber, step.ExecutionOrder,
             step.DestinationConnectorId, step.DestinationBaseUrl, step.Protocol, step.AuthenticationType,
-            step.TimeoutSeconds, execution.CorrelationId, payload));
+            step.TimeoutSeconds, execution.CorrelationId, payload, step.HttpMethod));
 
     private static (string Code, string Message) FailureDiagnostic(ExecutionAttemptFailure failure) => failure switch
     {

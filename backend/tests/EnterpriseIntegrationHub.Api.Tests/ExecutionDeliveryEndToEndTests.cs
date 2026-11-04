@@ -62,15 +62,15 @@ public sealed class ExecutionDeliveryEndToEndTests
             var builder = WebApplication.CreateSlimBuilder();
             builder.WebHost.ConfigureKestrel(server => server.Listen(IPAddress.Loopback, 0));
             await using var mock = builder.Build();
-            var calls = new ConcurrentQueue<(string Path, string? Key, string? Credential, string Body)>();
+            var calls = new ConcurrentQueue<(string Path, string Method, string? Key, string? Credential, string Body)>();
             var firstAttempts = 0;
             var interruptNext = 1;
             var interruptedRequest = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            mock.MapPost("/{step}", async context =>
+            mock.MapMethods("/{step}", ["POST", "PUT", "PATCH"], async context =>
             {
                 using var reader = new StreamReader(context.Request.Body);
                 var body = await reader.ReadToEndAsync();
-                calls.Enqueue((context.Request.Path.Value!, context.Request.Headers["Idempotency-Key"].FirstOrDefault(),
+                calls.Enqueue((context.Request.Path.Value!, context.Request.Method, context.Request.Headers["Idempotency-Key"].FirstOrDefault(),
                     context.Request.Headers["X-API-Key"].FirstOrDefault(), body));
                 if (body.Contains("\"amount\":99") && context.Request.Path == "/first" &&
                     Interlocked.Exchange(ref interruptNext, 0) == 1)
@@ -89,9 +89,9 @@ public sealed class ExecutionDeliveryEndToEndTests
                 ConnectorProtocol.REST, ConnectorAuthenticationType.APIKey, 5, ConnectorStatus.Active);
             source.AssignIngestionKeyHash(IngestionKeys.Hash(ingestionKey));
             var first = new Connector("First", "Test destination", system.Id, $"{origin}/first",
-                ConnectorProtocol.REST, ConnectorAuthenticationType.APIKey, 5, ConnectorStatus.Active);
+                ConnectorProtocol.REST, ConnectorAuthenticationType.APIKey, 5, ConnectorStatus.Active, ConnectorHttpMethod.Put);
             var second = new Connector("Second", "Test destination", system.Id, $"{origin}/second",
-                ConnectorProtocol.REST, ConnectorAuthenticationType.APIKey, 5, ConnectorStatus.Active);
+                ConnectorProtocol.REST, ConnectorAuthenticationType.APIKey, 5, ConnectorStatus.Active, ConnectorHttpMethod.Patch);
             var workflow = new Workflow("Test workflow", source.Id, "order.created", [new(first.Id, 1), new(second.Id, 2)]);
             workflow.Activate();
             await using (var seed = new EnterpriseIntegrationHubDbContext(dbOptions))
@@ -175,6 +175,7 @@ public sealed class ExecutionDeliveryEndToEndTests
                 status.Should().Be(IntegrationExecutionStatus.Succeeded);
                 var captured = calls.ToArray();
                 captured.Select(call => call.Path).Should().Equal("/first", "/first", "/second");
+                captured.Select(call => call.Method).Should().Equal("PUT", "PUT", "PATCH");
                 captured[0].Key.Should().NotBeNullOrWhiteSpace();
                 captured[1].Key.Should().Be(captured[0].Key);
                 captured[2].Key.Should().NotBe(captured[0].Key);
@@ -237,6 +238,7 @@ public sealed class ExecutionDeliveryEndToEndTests
                 status.Should().Be(IntegrationExecutionStatus.Succeeded);
                 var recoveryCalls = calls.Where(call => call.Body.Contains("\"amount\":99")).ToArray();
                 recoveryCalls.Select(call => call.Path).Should().Equal("/first", "/first", "/second");
+                recoveryCalls.Select(call => call.Method).Should().Equal("PUT", "PUT", "PATCH");
                 recoveryCalls[0].Key.Should().Be(recoveryCalls[1].Key);
                 await using var verify = new EnterpriseIntegrationHubDbContext(dbOptions);
                 var recoverySteps = await verify.ExecutionSteps.Where(step => step.IntegrationExecutionId == recoveryExecutionId)

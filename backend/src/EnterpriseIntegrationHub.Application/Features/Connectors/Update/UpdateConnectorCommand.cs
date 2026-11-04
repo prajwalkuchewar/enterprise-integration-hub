@@ -8,4 +8,5 @@ public sealed record UpdateConnectorCommand(
     string BaseUrl,
     ConnectorProtocol Protocol,
     ConnectorAuthenticationType AuthenticationType,
-    int TimeoutSeconds);
+    int TimeoutSeconds,
+    ConnectorHttpMethod? HttpMethod = null);

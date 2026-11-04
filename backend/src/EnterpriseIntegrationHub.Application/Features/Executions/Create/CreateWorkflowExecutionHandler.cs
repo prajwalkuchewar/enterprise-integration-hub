@@ -30,7 +30,8 @@ public sealed class CreateWorkflowExecutionHandler(
             step.Protocol,
             step.AuthenticationType,
             step.TimeoutSeconds,
-            step.ExecutionOrder));
+            step.ExecutionOrder,
+            step.HttpMethod));
         var execution = new IntegrationExecution(
             revision,
             command.SourceConnectorId,

@@ -23,6 +23,19 @@ The Angular development server proxies `/api` requests to `http://localhost:5194
 
 To create a production frontend bundle, run `npm run build`. The output is written under `frontend/dist/`.
 
+## REST destination methods
+
+REST connectors support POST, PUT, and PATCH with the event JSON as the request
+body. POST is the default for existing connectors and previously created
+execution steps. The selected method is stored with each execution step, so
+later connector changes do not alter an accepted execution. Changing the method
+on an active connector returns it to Draft. GET and DELETE are not supported.
+
+Destination delivery is opt-in and requires the outbox, Kafka consumer, and
+execution worker to be enabled, an allowed destination origin, and credentials.
+Connector updates from older clients that omit the method preserve its current
+value. Apply migrations before starting this version.
+
 ## Current frontend scope
 
 - Overview of registered systems, connectors, and workflows.

@@ -9,4 +9,5 @@ public sealed record CreateConnectorCommand(
     string BaseUrl,
     ConnectorProtocol Protocol,
     ConnectorAuthenticationType AuthenticationType,
-    int TimeoutSeconds);
+    int TimeoutSeconds,
+    ConnectorHttpMethod HttpMethod = ConnectorHttpMethod.Post);
