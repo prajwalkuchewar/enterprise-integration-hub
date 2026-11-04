@@ -39,6 +39,12 @@ internal sealed class DestinationNetworkPolicy
         return true;
     }
 
+    public void EnsureConfigured()
+    {
+        if (_origins.Length == 0)
+            throw new InvalidOperationException("At least one destination origin must be configured when the execution worker is enabled.");
+    }
+
     private static bool IsValidUri(Uri uri) =>
         (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp) &&
         uri.UserInfo.Length == 0 && uri.Fragment.Length == 0 && uri.Query.Length == 0 &&
