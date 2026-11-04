@@ -103,23 +103,32 @@ public sealed class IntegrationExecution : BaseEntity
         return GetCurrentStep(executionOrder).StartAttempt(now);
     }
 
-    public void MarkStepSucceeded(int executionOrder)
+    public void MarkStepSucceeded(int executionOrder) => MarkStepSucceeded(executionOrder, DateTimeOffset.UtcNow);
+
+    public void MarkStepSucceeded(int executionOrder, DateTimeOffset now)
     {
+        if (now == default)
+            throw new ArgumentException("A completion time must be provided.", nameof(now));
         EnsureRunning();
         var step = GetCurrentStep(executionOrder);
-        step.MarkSucceeded();
+        step.MarkSucceeded(now);
         if (Steps.All(candidate => candidate.Status == ExecutionStepStatus.Succeeded))
         {
             Status = IntegrationExecutionStatus.Succeeded;
-            CompletedAt = DateTimeOffset.UtcNow;
+            CompletedAt = now;
         }
     }
 
-    public void MarkStepFailed(int executionOrder, string failureCode, string failureMessage, DateTimeOffset? retryAt)
+    public void MarkStepFailed(int executionOrder, string failureCode, string failureMessage, DateTimeOffset? retryAt) =>
+        MarkStepFailed(executionOrder, failureCode, failureMessage, retryAt, DateTimeOffset.UtcNow);
+
+    public void MarkStepFailed(int executionOrder, string failureCode, string failureMessage, DateTimeOffset? retryAt, DateTimeOffset now)
     {
+        if (now == default)
+            throw new ArgumentException("A completion time must be provided.", nameof(now));
         EnsureRunning();
         var step = GetCurrentStep(executionOrder);
-        step.MarkFailed(failureCode, failureMessage, retryAt);
+        step.MarkFailed(failureCode, failureMessage, retryAt, now);
         if (retryAt.HasValue)
         {
             Status = IntegrationExecutionStatus.RetryScheduled;
@@ -129,7 +138,7 @@ public sealed class IntegrationExecution : BaseEntity
         foreach (var laterStep in Steps.Where(candidate => candidate.ExecutionOrder > executionOrder && candidate.Status == ExecutionStepStatus.Pending))
             laterStep.MarkSkipped();
         Status = IntegrationExecutionStatus.Failed;
-        CompletedAt = DateTimeOffset.UtcNow;
+        CompletedAt = now;
     }
 
     public void Cancel()
