@@ -97,16 +97,19 @@ public sealed class ExecutionAttemptRepository(EnterpriseIntegrationHubDbContext
         }, cancellationToken);
     }
 
-    public async Task<bool> FinishAsync(
+    public async Task<FinishExecutionAttemptStatus> FinishAsync(
         ExecutionLease lease, Guid attemptId, ExecutionAttemptOutcome outcome, int maxAttempts, CancellationToken cancellationToken)
     {
         Validate(lease, maxAttempts);
         ArgumentNullException.ThrowIfNull(outcome);
         if (attemptId == Guid.Empty)
             throw new ArgumentException("AttemptId must be provided.", nameof(attemptId));
-        if (outcome.Succeeded ? outcome.Failure is not null || outcome.RetryAt is not null :
+        if (outcome.HttpStatusCode is < 100 or > 599 || outcome.DurationMilliseconds is < 0)
+            throw new ArgumentException("Attempt diagnostics are invalid.", nameof(outcome));
+        if (outcome.Succeeded ? outcome.Failure is not null || outcome.RetryDelay is not null :
             outcome.Failure is null || !Enum.IsDefined(outcome.Failure.Value) ||
-            (outcome.RetryAt is not null && outcome.Failure != ExecutionAttemptFailure.TransientDestination))
+            (outcome.RetryDelay is not null && (outcome.Failure != ExecutionAttemptFailure.TransientDestination ||
+                outcome.RetryDelay < TimeSpan.Zero || outcome.RetryDelay > TimeSpan.FromDays(30))))
             throw new ArgumentException("The attempt outcome is invalid.", nameof(outcome));
 
         return await context.Database.CreateExecutionStrategy().ExecuteAsync(async ct =>
@@ -115,7 +118,7 @@ public sealed class ExecutionAttemptRepository(EnterpriseIntegrationHubDbContext
             await using var transaction = await context.Database.BeginTransactionAsync(ct);
             var inbox = await LockLeaseAsync(lease, ct);
             if (inbox is null)
-                return false;
+                return FinishExecutionAttemptStatus.LeaseLost;
             if (inbox.ActiveAttemptId != attemptId || inbox.ActiveAttemptLeaseToken != lease.Token)
                 throw new InvalidOperationException("The attempt is not owned by this lease.");
 
@@ -128,12 +131,14 @@ public sealed class ExecutionAttemptRepository(EnterpriseIntegrationHubDbContext
 
             DateTimeOffset? retryAt = null;
             if (outcome.Succeeded)
-                execution.MarkStepSucceeded(step.ExecutionOrder, now);
+                execution.MarkStepSucceeded(step.ExecutionOrder, now, outcome.HttpStatusCode, outcome.DurationMilliseconds);
             else
             {
-                retryAt = step.Attempts.Count >= maxAttempts ? null : outcome.RetryAt;
+                retryAt = step.Attempts.Count >= maxAttempts || outcome.RetryDelay is null
+                    ? null
+                    : now.Add(outcome.RetryDelay.Value);
                 var (code, message) = FailureDiagnostic(outcome.Failure!.Value);
-                execution.MarkStepFailed(step.ExecutionOrder, code, message, retryAt, now);
+                execution.MarkStepFailed(step.ExecutionOrder, code, message, retryAt, now, outcome.HttpStatusCode, outcome.DurationMilliseconds);
             }
 
             await context.SaveChangesAsync(ct);
@@ -159,9 +164,11 @@ public sealed class ExecutionAttemptRepository(EnterpriseIntegrationHubDbContext
                       AND [LeaseExpiresAt] > SYSDATETIMEOFFSET()
                     """, ct);
             if (updated != 1)
-                return false;
+                return FinishExecutionAttemptStatus.LeaseLost;
             await transaction.CommitAsync(ct);
-            return true;
+            return terminal ? FinishExecutionAttemptStatus.Completed
+                : retryAt.HasValue ? FinishExecutionAttemptStatus.RetryScheduled
+                : FinishExecutionAttemptStatus.ReadyForNextStep;
         }, cancellationToken);
     }
 

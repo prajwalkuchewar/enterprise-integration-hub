@@ -10,4 +10,6 @@ public enum ExecutionAttemptFailure
 public sealed record ExecutionAttemptOutcome(
     bool Succeeded,
     ExecutionAttemptFailure? Failure,
-    DateTimeOffset? RetryAt);
+    TimeSpan? RetryDelay,
+    int? HttpStatusCode = null,
+    long? DurationMilliseconds = null);

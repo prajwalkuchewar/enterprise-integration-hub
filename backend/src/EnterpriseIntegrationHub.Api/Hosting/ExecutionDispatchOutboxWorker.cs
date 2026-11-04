@@ -15,7 +15,10 @@ public sealed class ExecutionDispatchOutboxWorker(
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await Task.Yield();
         var settings = options.Value;
+        if (!settings.Enabled)
+            return;
         logger.LogInformation(
             "Execution dispatch outbox worker started as {LeaseOwner} (batch {BatchSize}, lease {LeaseSeconds}s).",
             _leaseOwner,

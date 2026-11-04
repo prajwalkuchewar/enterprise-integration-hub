@@ -9,6 +9,7 @@ using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 using EnterpriseIntegrationHub.Application.Features.Executions.DispatchOutbox;
 using EnterpriseIntegrationHub.Application.Features.Executions.Worker;
+using EnterpriseIntegrationHub.Application.Interfaces;
 using EnterpriseIntegrationHub.Domain.Entities;
 using EnterpriseIntegrationHub.Domain.Enums;
 using EnterpriseIntegrationHub.Infrastructure.Persistence;
@@ -20,6 +21,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Moq;
 using Xunit;
 
 namespace EnterpriseIntegrationHub.Infrastructure.Tests;
@@ -334,7 +336,7 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         using (var payload = JsonDocument.Parse(first.Work.PayloadJson))
             payload.RootElement.GetProperty("nested").GetProperty("amount").GetInt32().Should().Be(42);
 
-        (await attempts.FinishAsync(lease, first.Work.AttemptId, new(true, null, null), 3, default)).Should().BeTrue();
+        (await attempts.FinishAsync(lease, first.Work.AttemptId, new(true, null, null), 3, default)).Should().Be(FinishExecutionAttemptStatus.Completed);
         await using var verify = database.CreateContext();
         var stored = await verify.IntegrationExecutions.Include(item => item.Steps).ThenInclude(step => step.Attempts).SingleAsync();
         stored.Status.Should().Be(IntegrationExecutionStatus.Succeeded);
@@ -355,11 +357,11 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         var attempts = new ExecutionAttemptRepository(context);
         var first = (await attempts.BeginAsync(lease, 3, default)).Work!;
         first.ExecutionOrder.Should().Be(1);
-        (await attempts.FinishAsync(lease, first.AttemptId, new(true, null, null), 3, default)).Should().BeTrue();
+        (await attempts.FinishAsync(lease, first.AttemptId, new(true, null, null), 3, default)).Should().Be(FinishExecutionAttemptStatus.ReadyForNextStep);
         var second = (await attempts.BeginAsync(lease, 3, default)).Work!;
         second.ExecutionOrder.Should().Be(2);
         second.StepId.Should().NotBe(first.StepId);
-        (await attempts.FinishAsync(lease, second.AttemptId, new(true, null, null), 3, default)).Should().BeTrue();
+        (await attempts.FinishAsync(lease, second.AttemptId, new(true, null, null), 3, default)).Should().Be(FinishExecutionAttemptStatus.Completed);
 
         await using var verify = database.CreateContext();
         var execution = await verify.IntegrationExecutions.Include(item => item.Steps).ThenInclude(step => step.Attempts).SingleAsync();
@@ -389,8 +391,8 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         newWork.AttemptId.Should().NotBe(oldWork.AttemptId);
         newWork.AttemptNumber.Should().Be(2);
         newWork.IdempotencyKey.Should().Be(oldWork.IdempotencyKey);
-        (await oldAttempts.FinishAsync(oldLease, oldWork.AttemptId, new(true, null, null), 3, default)).Should().BeFalse();
-        (await newAttempts.FinishAsync(newLease, newWork.AttemptId, new(true, null, null), 3, default)).Should().BeTrue();
+        (await oldAttempts.FinishAsync(oldLease, oldWork.AttemptId, new(true, null, null), 3, default)).Should().Be(FinishExecutionAttemptStatus.LeaseLost);
+        (await newAttempts.FinishAsync(newLease, newWork.AttemptId, new(true, null, null), 3, default)).Should().Be(FinishExecutionAttemptStatus.Completed);
 
         await using var verify = database.CreateContext();
         var step = await verify.ExecutionSteps.Include(item => item.Attempts).SingleAsync();
@@ -432,9 +434,8 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         var lease = (await leases.ClaimAsync(60, default))!;
         var attempts = new ExecutionAttemptRepository(context);
         var first = (await attempts.BeginAsync(lease, 3, default)).Work!;
-        var retryAt = DateTimeOffset.UtcNow.AddDays(1);
         (await attempts.FinishAsync(lease, first.AttemptId,
-            new(false, ExecutionAttemptFailure.TransientDestination, retryAt), 3, default)).Should().BeTrue();
+            new(false, ExecutionAttemptFailure.TransientDestination, TimeSpan.FromDays(1)), 3, default)).Should().Be(FinishExecutionAttemptStatus.RetryScheduled);
         (await leases.ClaimAsync(60, default)).Should().BeNull();
         await context.Database.ExecuteSqlInterpolatedAsync($"""
             UPDATE [ExecutionDispatchInbox] SET [AvailableAt] = DATEADD(second, -1, SYSDATETIMEOFFSET())
@@ -447,7 +448,7 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         var retry = (await attempts.BeginAsync(retryLease, 3, default)).Work!;
         retry.AttemptNumber.Should().Be(2);
         retry.IdempotencyKey.Should().Be(first.IdempotencyKey);
-        (await attempts.FinishAsync(retryLease, retry.AttemptId, new(true, null, null), 3, default)).Should().BeTrue();
+        (await attempts.FinishAsync(retryLease, retry.AttemptId, new(true, null, null), 3, default)).Should().Be(FinishExecutionAttemptStatus.Completed);
 
         await using var verify = database.CreateContext();
         var step = await verify.ExecutionSteps.Include(item => item.Attempts).SingleAsync();
@@ -466,7 +467,7 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         var attempts = new ExecutionAttemptRepository(context);
         var work = (await attempts.BeginAsync(lease, 1, default)).Work!;
         (await attempts.FinishAsync(lease, work.AttemptId,
-            new(false, ExecutionAttemptFailure.TransientDestination, DateTimeOffset.UtcNow.AddMinutes(1)), 1, default)).Should().BeTrue();
+            new(false, ExecutionAttemptFailure.TransientDestination, TimeSpan.FromMinutes(1)), 1, default)).Should().Be(FinishExecutionAttemptStatus.Completed);
 
         await using var verify = database.CreateContext();
         (await verify.IntegrationExecutions.SingleAsync()).Status.Should().Be(IntegrationExecutionStatus.Failed);
@@ -555,6 +556,64 @@ public sealed class SqlServerEventIngestionPersistenceTests(SqlServerFixture fix
         (await verify.IntegrationExecutions.SingleAsync()).Status.Should().Be(IntegrationExecutionStatus.Running);
         (await verify.ExecutionStepAttempts.SingleAsync()).Status.Should().Be(ExecutionStepAttemptStatus.Running);
         (await verify.ExecutionDispatchInbox.SingleAsync()).ActiveAttemptId.Should().Be(work.AttemptId);
+    }
+
+    [Fact]
+    public async Task ExecutionWorker_ExecutesMultipleStepsInOrderOutsideSqlTransactions()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        await QueueDispatchAsync(database, multipleSteps: true);
+        await using var context = database.CreateContext();
+        var calls = new List<ExecutionAttemptWork>();
+        var destination = new Mock<IExecutionDestinationInvoker>();
+        destination.Setup(item => item.InvokeAsync(It.IsAny<ExecutionAttemptWork>(), It.IsAny<CancellationToken>()))
+            .Callback<ExecutionAttemptWork, CancellationToken>((work, _) =>
+            {
+                context.Database.CurrentTransaction.Should().BeNull();
+                calls.Add(work);
+            })
+            .ReturnsAsync(new DestinationInvocationResult(DestinationInvocationStatus.Succeeded, 202, 37));
+        var worker = new ExecutionWorkerHandler(new ExecutionLeaseRepository(context), new ExecutionAttemptRepository(context), destination.Object);
+
+        var result = await worker.RunOnceAsync(new ExecutionWorkerOptions(), default);
+
+        result.Should().Be(ExecutionWorkerRunStatus.Finished);
+        calls.Select(work => work.ExecutionOrder).Should().Equal(1, 2);
+        calls.Select(work => work.IdempotencyKey).Distinct().Should().HaveCount(2);
+        await using var verify = database.CreateContext();
+        (await verify.IntegrationExecutions.SingleAsync()).Status.Should().Be(IntegrationExecutionStatus.Succeeded);
+        (await verify.ExecutionStepAttempts.CountAsync()).Should().Be(2);
+        var storedAttempts = await verify.ExecutionStepAttempts.ToListAsync();
+        storedAttempts.Should().OnlyContain(attempt => attempt.HttpStatusCode == 202 && attempt.DurationMilliseconds == 37);
+    }
+
+    [Fact]
+    public async Task ExecutionWorker_TransientFailureSchedulesRetryUsingDatabaseTime()
+    {
+        await using var database = await SqlServerRelationalIntegrationTests.TestDatabase.CreateAsync(fixture);
+        await QueueDispatchAsync(database);
+        await using var context = database.CreateContext();
+        var destination = new Mock<IExecutionDestinationInvoker>();
+        destination.Setup(item => item.InvokeAsync(It.IsAny<ExecutionAttemptWork>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DestinationInvocationResult(DestinationInvocationStatus.TransientFailure, 503, 54));
+        var worker = new ExecutionWorkerHandler(new ExecutionLeaseRepository(context), new ExecutionAttemptRepository(context), destination.Object);
+        var options = new ExecutionWorkerOptions { BaseRetryDelaySeconds = 2, MaxRetryDelaySeconds = 2 };
+
+        var result = await worker.RunOnceAsync(options, default);
+
+        result.Should().Be(ExecutionWorkerRunStatus.RetryScheduled);
+        await using var verify = database.CreateContext();
+        var execution = await verify.IntegrationExecutions.SingleAsync();
+        var step = await verify.ExecutionSteps.SingleAsync();
+        var attempt = await verify.ExecutionStepAttempts.SingleAsync();
+        attempt.HttpStatusCode.Should().Be(503);
+        attempt.DurationMilliseconds.Should().Be(54);
+        var inbox = await verify.ExecutionDispatchInbox.SingleAsync();
+        execution.Status.Should().Be(IntegrationExecutionStatus.RetryScheduled);
+        step.NextAttemptAt.Should().Be(inbox.AvailableAt);
+        step.NextAttemptAt.Should().BeOnOrAfter(attempt.CompletedAt!.Value);
+        step.NextAttemptAt.Should().BeOnOrBefore(attempt.CompletedAt.Value.AddSeconds(2));
+        inbox.LeaseToken.Should().BeNull();
     }
 
     private sealed class DelayedSaveInterceptor : SaveChangesInterceptor
