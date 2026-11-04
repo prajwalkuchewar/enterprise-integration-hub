@@ -100,6 +100,7 @@ namespace EnterpriseIntegrationHub.Api
             services.AddHostedService<ExecutionDispatchConsumerWorker>();
             services.Configure<DestinationHttpOptions>(Configuration.GetSection(DestinationHttpOptions.SectionName));
             services.AddSingleton<DestinationNetworkPolicy>();
+            services.AddSingleton<OAuth2TokenProvider>();
             services.AddHttpClient(HttpExecutionDestinationInvoker.ClientName, client => client.Timeout = Timeout.InfiniteTimeSpan)
                 .ConfigurePrimaryHttpMessageHandler(provider => new SocketsHttpHandler
                 {
