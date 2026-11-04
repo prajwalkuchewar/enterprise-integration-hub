@@ -104,6 +104,8 @@ public sealed class ExecutionAttemptRepository(EnterpriseIntegrationHubDbContext
         ArgumentNullException.ThrowIfNull(outcome);
         if (attemptId == Guid.Empty)
             throw new ArgumentException("AttemptId must be provided.", nameof(attemptId));
+        if (outcome.HttpStatusCode is < 100 or > 599 || outcome.DurationMilliseconds is < 0)
+            throw new ArgumentException("Attempt diagnostics are invalid.", nameof(outcome));
         if (outcome.Succeeded ? outcome.Failure is not null || outcome.RetryDelay is not null :
             outcome.Failure is null || !Enum.IsDefined(outcome.Failure.Value) ||
             (outcome.RetryDelay is not null && (outcome.Failure != ExecutionAttemptFailure.TransientDestination ||
@@ -129,14 +131,14 @@ public sealed class ExecutionAttemptRepository(EnterpriseIntegrationHubDbContext
 
             DateTimeOffset? retryAt = null;
             if (outcome.Succeeded)
-                execution.MarkStepSucceeded(step.ExecutionOrder, now);
+                execution.MarkStepSucceeded(step.ExecutionOrder, now, outcome.HttpStatusCode, outcome.DurationMilliseconds);
             else
             {
                 retryAt = step.Attempts.Count >= maxAttempts || outcome.RetryDelay is null
                     ? null
                     : now.Add(outcome.RetryDelay.Value);
                 var (code, message) = FailureDiagnostic(outcome.Failure!.Value);
-                execution.MarkStepFailed(step.ExecutionOrder, code, message, retryAt, now);
+                execution.MarkStepFailed(step.ExecutionOrder, code, message, retryAt, now, outcome.HttpStatusCode, outcome.DurationMilliseconds);
             }
 
             await context.SaveChangesAsync(ct);

@@ -24,6 +24,7 @@ using EnterpriseIntegrationHub.Application.Features.Executions.DispatchOutbox;
 
 using EnterpriseIntegrationHub.Application.Interfaces;
 using EnterpriseIntegrationHub.Api.Hosting;
+using EnterpriseIntegrationHub.Api.Delivery;
 using EnterpriseIntegrationHub.Infrastructure.Messaging.Kafka;
 using EnterpriseIntegrationHub.Infrastructure.Persistence;
 using EnterpriseIntegrationHub.Infrastructure.Repositories;
@@ -97,6 +98,19 @@ namespace EnterpriseIntegrationHub.Api
             services.AddScoped<IExecutionLeaseRepository, ExecutionLeaseRepository>();
             services.AddScoped<IExecutionAttemptRepository, ExecutionAttemptRepository>();
             services.AddHostedService<ExecutionDispatchConsumerWorker>();
+            services.Configure<DestinationHttpOptions>(Configuration.GetSection(DestinationHttpOptions.SectionName));
+            services.AddSingleton<DestinationNetworkPolicy>();
+            services.AddHttpClient(HttpExecutionDestinationInvoker.ClientName, client => client.Timeout = Timeout.InfiniteTimeSpan)
+                .ConfigurePrimaryHttpMessageHandler(provider => new SocketsHttpHandler
+                {
+                    AllowAutoRedirect = false,
+                    UseCookies = false,
+                    UseProxy = false,
+                    PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+                    ConnectCallback = provider.GetRequiredService<DestinationNetworkPolicy>().ConnectAsync
+                })
+                .RemoveAllLoggers();
+            services.AddScoped<IExecutionDestinationInvoker, HttpExecutionDestinationInvoker>();
 
             // Cross-origin requests (adjust origins as needed)
             services.AddCors(options =>

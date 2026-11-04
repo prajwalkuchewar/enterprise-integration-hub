@@ -1,4 +1,5 @@
 using EnterpriseIntegrationHub.Application.Interfaces;
+using System.Diagnostics;
 
 namespace EnterpriseIntegrationHub.Application.Features.Executions.Worker;
 
@@ -50,25 +51,28 @@ public sealed class ExecutionWorkerHandler(
                     return ExecutionWorkerRunStatus.LeaseLost;
                 using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 deadline.CancelAfter(TimeSpan.FromSeconds(work.TimeoutSeconds));
+                var timer = Stopwatch.StartNew();
                 try
                 {
                     result = await destination.InvokeAsync(work, deadline.Token);
                 }
                 catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested && deadline.IsCancellationRequested)
                 {
-                    result = DestinationInvocationResult.TransientFailure;
+                    result = new DestinationInvocationResult(DestinationInvocationStatus.TransientFailure,
+                        DurationMilliseconds: timer.ElapsedMilliseconds);
                 }
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            var outcome = result switch
+            var outcome = result.Status switch
             {
-                DestinationInvocationResult.Succeeded => new ExecutionAttemptOutcome(true, null, null),
-                DestinationInvocationResult.TransientFailure => new ExecutionAttemptOutcome(false,
+                DestinationInvocationStatus.Succeeded => new ExecutionAttemptOutcome(true, null, null, result.HttpStatusCode, result.DurationMilliseconds),
+                DestinationInvocationStatus.TransientFailure => new ExecutionAttemptOutcome(false,
                     ExecutionAttemptFailure.TransientDestination,
-                    work.AttemptNumber < options.MaxAttempts ? CalculateRetryDelay(work.AttemptNumber, options) : null),
-                DestinationInvocationResult.PermanentFailure => new ExecutionAttemptOutcome(false, ExecutionAttemptFailure.PermanentDestination, null),
-                DestinationInvocationResult.InvalidConfiguration => new ExecutionAttemptOutcome(false, ExecutionAttemptFailure.InvalidConfiguration, null),
+                    work.AttemptNumber < options.MaxAttempts ? CalculateRetryDelay(work.AttemptNumber, options) : null,
+                    result.HttpStatusCode, result.DurationMilliseconds),
+                DestinationInvocationStatus.PermanentFailure => new ExecutionAttemptOutcome(false, ExecutionAttemptFailure.PermanentDestination, null, result.HttpStatusCode, result.DurationMilliseconds),
+                DestinationInvocationStatus.InvalidConfiguration => new ExecutionAttemptOutcome(false, ExecutionAttemptFailure.InvalidConfiguration, null, result.HttpStatusCode, result.DurationMilliseconds),
                 _ => throw new InvalidDataException("Destination invocation returned an invalid result.")
             };
 
