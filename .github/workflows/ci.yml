@@ -21,6 +21,21 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
+      - name: Enforce local-only documentation
+        working-directory: .
+        shell: bash
+        run: |
+          git ls-files -z | while IFS= read -r -d '' path; do
+            lower="${path,,}"
+            if [[ "$lower" == docs/* || "$lower" == */docs/* ||
+                  ( "$path" != README.md && ( "$lower" == *.md || "$lower" == *.mdx ||
+                    "$lower" == *.markdown || "$lower" == readme || "$lower" == readme.* ||
+                    "$lower" == */readme || "$lower" == */readme.* ) ) ]]; then
+              printf 'Documentation must remain local: %s\n' "$path" >&2
+              exit 1
+            fi
+          done
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
