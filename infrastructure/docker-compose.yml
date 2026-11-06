@@ -4,7 +4,7 @@ services:
     container_name: eih-sqlserver
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD=Passw0rd # change to a secure password that meets SQL Server complexity rules
+      - SA_PASSWORD=${SA_PASSWORD:?Set SA_PASSWORD in infrastructure/.env (see .env.example)}
     ports:
       - '1433:1433'
     volumes:
