@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Text;
 using EnterpriseIntegrationHub.Api.Delivery;
@@ -177,6 +178,96 @@ public sealed class HttpExecutionDestinationInvokerTests
         cancelled.Cancel();
         var cancelledAction = async () => await invoker.InvokeAsync(Work(0, ConnectorAuthenticationType.APIKey, "ok"), cancelled.Token);
         await cancelledAction.Should().ThrowAsync<OperationCanceledException>();
+        await mock.StopAsync();
+    }
+
+    [Fact]
+    public async Task Invoker_OAuth2ClientCredentialsCachesRefreshesAndMapsTokenFailures()
+    {
+        var builder = WebApplication.CreateSlimBuilder();
+        builder.WebHost.ConfigureKestrel(server => server.Listen(IPAddress.Loopback, 0));
+        await using var mock = builder.Build();
+        var tokenRequests = new ConcurrentQueue<(string Mode, string Body)>();
+        var destinationAuthorizations = new ConcurrentQueue<string?>();
+        mock.MapPost("/oauth/{mode}", async context =>
+        {
+            using var reader = new StreamReader(context.Request.Body);
+            var mode = context.Request.RouteValues["mode"]!.ToString()!;
+            tokenRequests.Enqueue((mode, await reader.ReadToEndAsync()));
+            var issued = tokenRequests.Count;
+            switch (mode)
+            {
+                case "unauthorized": context.Response.StatusCode = 401; break;
+                case "unavailable": context.Response.StatusCode = 503; break;
+                case "malformed": await context.Response.WriteAsync("{\"token\":\"missing\"}"); break;
+                case "short": await context.Response.WriteAsJsonAsync(new { access_token = $"tok-{issued}", expires_in = 1 }); break;
+                default: await context.Response.WriteAsJsonAsync(new { access_token = $"tok-{issued}", expires_in = 3600 }); break;
+            }
+        });
+        mock.MapPost("/{action}", context =>
+        {
+            destinationAuthorizations.Enqueue(context.Request.Headers.Authorization.FirstOrDefault());
+            return Task.CompletedTask;
+        });
+        await mock.StartAsync();
+        var origin = mock.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();
+        var connectors = Enumerable.Range(0, 7).Select(_ => Guid.NewGuid()).ToArray();
+        var config = new Dictionary<string, string?>
+        {
+            ["DestinationHttp:AllowedOrigins:0"] = origin,
+            ["DestinationHttp:AllowInsecureHttp"] = "true",
+            ["DestinationHttp:AllowLoopback"] = "true"
+        };
+        void AddOAuth(int index, string tokenPath, string? tokenUrl = null)
+        {
+            config[$"DestinationCredentials:{connectors[index]:D}:TokenUrl"] = tokenUrl ?? $"{origin}/oauth/{tokenPath}";
+            config[$"DestinationCredentials:{connectors[index]:D}:ClientId"] = $"client-{index}";
+            config[$"DestinationCredentials:{connectors[index]:D}:ClientSecret"] = $"secret-{index}";
+        }
+        AddOAuth(0, "ok");
+        config[$"DestinationCredentials:{connectors[0]:D}:Scope"] = "eih.write";
+        AddOAuth(1, "short");
+        AddOAuth(2, "unauthorized");
+        AddOAuth(3, "unavailable");
+        AddOAuth(4, "malformed");
+        AddOAuth(5, "ok", "https://example.invalid/oauth/ok");
+        AddOAuth(6, "ok");
+
+        using var baseFactory = new EnterpriseIntegrationHubApiFactory();
+        using var factory = baseFactory.WithWebHostBuilder(host =>
+            host.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(config)));
+        using var hostClient = factory.CreateClient();
+        using var scope = factory.Services.CreateScope();
+        var invoker = scope.ServiceProvider.GetRequiredService<IExecutionDestinationInvoker>();
+        ExecutionAttemptWork Work(int index) =>
+            new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, 1, connectors[index], $"{origin}/ok",
+                ConnectorProtocol.REST, ConnectorAuthenticationType.OAuth2, 2, null, "{}");
+        int TokenRequestsFor(int index) => tokenRequests.Count(request => request.Body.Contains($"client_id=client-{index}"));
+
+        var first = await invoker.InvokeAsync(Work(0), default);
+        var second = await invoker.InvokeAsync(Work(0), default);
+        first.Status.Should().Be(DestinationInvocationStatus.Succeeded);
+        second.Status.Should().Be(DestinationInvocationStatus.Succeeded);
+        TokenRequestsFor(0).Should().Be(1, "a token with a long lifetime is cached and reused");
+        tokenRequests.Should().Contain(request => request.Body.Contains("grant_type=client_credentials") &&
+            request.Body.Contains("client_secret=secret-0") && request.Body.Contains("scope=eih.write"));
+        destinationAuthorizations.Should().Equal("Bearer tok-1", "Bearer tok-1");
+
+        (await invoker.InvokeAsync(Work(1), default)).Status.Should().Be(DestinationInvocationStatus.Succeeded);
+        (await invoker.InvokeAsync(Work(1), default)).Status.Should().Be(DestinationInvocationStatus.Succeeded);
+        TokenRequestsFor(1).Should().Be(2, "a token expiring inside the refresh window is fetched again");
+
+        (await invoker.InvokeAsync(Work(2), default)).Status.Should().Be(DestinationInvocationStatus.InvalidConfiguration);
+        (await invoker.InvokeAsync(Work(3), default)).Status.Should().Be(DestinationInvocationStatus.TransientFailure);
+        (await invoker.InvokeAsync(Work(4), default)).Status.Should().Be(DestinationInvocationStatus.InvalidConfiguration);
+        (await invoker.InvokeAsync(Work(5), default)).Status.Should().Be(DestinationInvocationStatus.InvalidConfiguration);
+        TokenRequestsFor(5).Should().Be(0, "a token URL outside the allowlist is never contacted");
+
+        var concurrent = await Task.WhenAll(Enumerable.Range(0, 5).Select(_ => invoker.InvokeAsync(Work(6), default)));
+        concurrent.Should().OnlyContain(result => result.Status == DestinationInvocationStatus.Succeeded);
+        TokenRequestsFor(6).Should().Be(1, "concurrent sends for one connector share a single token fetch");
+
+        destinationAuthorizations.Should().HaveCount(9, "failed token acquisition never reaches the destination");
         await mock.StopAsync();
     }
 
